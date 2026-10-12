@@ -23,7 +23,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 #define PTO_TEMPLATE_ARGS(...) <__VA_ARGS__>
 
-#if defined(PTO_NPU_ARCH_KIRIN9030) || defined(PTO_NPU_ARCH_KIRINX90) || defined(PTO_NPU_ARCH_KIRINDEV0000)
+#if defined(PTO_NPU_ARCH_KIRIN9030) || defined(PTO_NPU_ARCH_KIRINX90) || defined(PTO_NPU_ARCH_KIRIN9050)
 #define PTO_FORWARD_L2HINT_TO_IMPL 0
 #else
 #define PTO_FORWARD_L2HINT_TO_IMPL 1
@@ -474,7 +474,7 @@ PTO_INST RecordEvent TSTORE(GlobalData& dst, TileData& src, FpTileData& fp, Wait
 }
 
 #if defined(PTO_NPU_ARCH_A5) || defined(PTO_NPU_ARCH_A2A3) || defined(PTO_NPU_ARCH_KIRIN9030) || \
-    defined(PTO_NPU_ARCH_KIRINDEV0000) || defined(__CPU_SIM)
+    defined(PTO_NPU_ARCH_KIRIN9050) || defined(__CPU_SIM)
 template <
     STPhase Phase, typename TileData, typename GlobalData, typename FpTileData,
     AtomicType atomicType = AtomicType::AtomicNone, ReluPreMode reluPreMode = ReluPreMode::NoRelu,
@@ -503,7 +503,7 @@ PTO_INST RecordEvent TSTORE_FP(GlobalData& dst, TileData& src, FpTileData& fp, W
 }
 
 #if defined(PTO_NPU_ARCH_A5) || defined(PTO_NPU_ARCH_A2A3) || defined(PTO_NPU_ARCH_KIRIN9030) || \
-    defined(PTO_NPU_ARCH_KIRINDEV0000) || defined(__CPU_SIM)
+    defined(PTO_NPU_ARCH_KIRIN9050) || defined(__CPU_SIM)
 template <
     STPhase Phase, typename TileData, typename GlobalData, typename FpTileData,
     AtomicType atomicType = AtomicType::AtomicNone, ReluPreMode reluPreMode = ReluPreMode::NoRelu,
@@ -684,7 +684,7 @@ PTO_INST RecordEvent TSTORE(GlobalData& dst, TileData& src, FpTileData& fp, Wait
 }
 
 #if defined(PTO_NPU_ARCH_A5) || defined(PTO_NPU_ARCH_A2A3) || defined(PTO_NPU_ARCH_KIRIN9030) || \
-    defined(PTO_NPU_ARCH_KIRINDEV0000) || defined(__CPU_SIM)
+    defined(PTO_NPU_ARCH_KIRIN9050) || defined(__CPU_SIM)
 template <
     TStoreL2Hint l2Control, STPhase Phase, typename TileData, typename GlobalData, typename FpTileData,
     AtomicType atomicType = AtomicType::AtomicNone, ReluPreMode reluPreMode = ReluPreMode::NoRelu,
@@ -1068,13 +1068,13 @@ TGEMV_BIAS(TileRes& cMatrix, TileLeft& aMatrix, TileRight& bMatrix, TileBias& bi
     return {};
 }
 
-#if defined(PTO_NPU_ARCH_KIRINDEV0000)
+#if defined(PTO_NPU_ARCH_KIRIN9050)
 // ============================================================================
-// kirinDev0000 TMATMUL / TMATMUL_ACC with MatmulMacroConfig overloads
+// kirin9050 TMATMUL / TMATMUL_ACC with MatmulMacroConfig overloads
 //   These overloads delegate to TMATMUL_MACRO_IMPL / TMATMUL_MACRO_ACC_IMPL,
 //   providing the full FixPipe capabilities (preQuant, preRelu, clipRelu, gemvCtrl)
 //   through the unified TMATMUL / TMATMUL_ACC interface names.
-//   Only compiled for kirinDev0000, does not affect other architectures.
+//   Only compiled for kirin9050, does not affect other architectures.
 // ============================================================================
 
 // --- TMATMUL_ACC: no bias, with cfg ---
@@ -1139,7 +1139,7 @@ PTO_INST RecordEvent TMATMUL(
     return {};
 }
 
-#endif // PTO_NPU_ARCH_KIRINDEV0000
+#endif // PTO_NPU_ARCH_KIRIN9050
 
 template <
     typename DstTileData, typename TmpTileData, typename Src0TileData, typename Src1TileData, typename Src2TileData,
@@ -1599,7 +1599,7 @@ TINSERT(DstTileData& dst, SrcTileData& src, FpTileData& fp, uint16_t indexRow, u
 #endif
 
 #if defined(PTO_NPU_ARCH_A5) || defined(PTO_NPU_ARCH_KIRIN9030) || defined(PTO_NPU_ARCH_KIRINX90) || \
-    defined(PTO_NPU_ARCH_KIRINDEV0000) || defined(__CPU_SIM)
+    defined(PTO_NPU_ARCH_KIRIN9050) || defined(__CPU_SIM)
 template <TInsertMode mode, typename DstTileData, typename SrcTileData, typename... WaitEvents>
 PTO_INST RecordEvent
 TINSERT(DstTileData& dst, SrcTileData& src, uint16_t indexRow = 0, uint16_t indexCol = 0, WaitEvents&... events)
@@ -1921,7 +1921,7 @@ PTO_INST RecordEvent TMOV(DstTileData& dst, SrcTileData& src, FpTileData& fp, Wa
 }
 
 #if defined(PTO_NPU_ARCH_A5) || defined(PTO_NPU_ARCH_A2A3) || defined(PTO_NPU_ARCH_KIRIN9030) || \
-    defined(PTO_NPU_ARCH_KIRINX90) || defined(PTO_NPU_ARCH_KIRINDEV0000) || defined(__CPU_SIM)
+    defined(PTO_NPU_ARCH_KIRINX90) || defined(PTO_NPU_ARCH_KIRIN9050) || defined(__CPU_SIM)
 template <
     STPhase Phase, typename DstTileData, typename SrcTileData, typename FpTileData,
     ReluPreMode reluMode = ReluPreMode::NoRelu, typename... WaitEvents,
@@ -1946,7 +1946,7 @@ PTO_INST RecordEvent TMOV_FP(DstTileData& dst, SrcTileData& src, FpTileData& fp,
 }
 
 #if defined(PTO_NPU_ARCH_A5) || defined(PTO_NPU_ARCH_A2A3) || defined(PTO_NPU_ARCH_KIRIN9030) || \
-    defined(PTO_NPU_ARCH_KIRINX90) || defined(PTO_NPU_ARCH_KIRINDEV0000) || defined(__CPU_SIM)
+    defined(PTO_NPU_ARCH_KIRINX90) || defined(PTO_NPU_ARCH_KIRIN9050) || defined(__CPU_SIM)
 template <
     STPhase Phase, typename DstTileData, typename SrcTileData, typename FpTileData,
     ReluPreMode reluMode = ReluPreMode::NoRelu, typename... WaitEvents,
@@ -1959,8 +1959,7 @@ PTO_INST RecordEvent TMOV_FP(DstTileData& dst, SrcTileData& src, FpTileData& fp,
 }
 #endif
 
-#if defined(PTO_NPU_ARCH_A5) || defined(PTO_NPU_ARCH_KIRIN9030) || defined(PTO_NPU_ARCH_KIRINDEV0000) || \
-    defined(__CPU_SIM)
+#if defined(PTO_NPU_ARCH_A5) || defined(PTO_NPU_ARCH_KIRIN9030) || defined(PTO_NPU_ARCH_KIRIN9050) || defined(__CPU_SIM)
 template <
     typename DstTileData, typename SrcTileData, typename FpTileData, AccToVecMode mode,
     ReluPreMode reluMode = ReluPreMode::NoRelu, typename... WaitEvents,
@@ -1974,8 +1973,7 @@ PTO_INST RecordEvent TMOV(DstTileData& dst, SrcTileData& src, FpTileData& fp, Wa
 }
 #endif
 
-#if defined(PTO_NPU_ARCH_A5) || defined(PTO_NPU_ARCH_KIRIN9030) || defined(PTO_NPU_ARCH_KIRINDEV0000) || \
-    defined(__CPU_SIM)
+#if defined(PTO_NPU_ARCH_A5) || defined(PTO_NPU_ARCH_KIRIN9030) || defined(PTO_NPU_ARCH_KIRIN9050) || defined(__CPU_SIM)
 template <
     STPhase Phase, typename DstTileData, typename SrcTileData, typename FpTileData, AccToVecMode mode,
     ReluPreMode reluMode = ReluPreMode::NoRelu, typename... WaitEvents,
