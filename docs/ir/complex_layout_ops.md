@@ -49,7 +49,7 @@ view = reinterpret_view(src, result_type)
 
 **约束：**
 
-- **实现检查（A2A3/A5）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品/Ascend 950PR&950DT系列产品）**
   - 源和结果视图必须使用相同的存储位置：`src.loc == view.loc`
   - 源和结果必须具有静态物理尺寸，且总字节大小相等
   - 不支持有装箱（boxed）与无装箱（non-boxed）layout 之间的转换
@@ -97,15 +97,15 @@ For each row i:
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - src0、src1 和 dst 必须使用相同的元素类型，且为以下之一：`i8`、`i16`、`i32`、`f16`、`f32`、`bf16`
   - 所有 tile 必须使用 `loc=vec`
   - 三个 tile 必须为 rank-2，且 src0、src1 的有效行数必须与 dst 的有效行数相同
   - src0 的有效列数 + src1 的有效列数 <= dst 的列数
   - 拼接会改变列方向长度，因此三者的物理 static shape 不要求完全相同
 
-- **实现检查（A5）**
-  - 同 A2A3 要求，额外要求所有 tile 必须使用 `blayout=row_major`
+- **实现检查（Ascend 950PR&950DT系列产品）**
+  - 同 Atlas A2系列产品/Atlas A3系列产品 要求，额外要求所有 tile 必须使用 `blayout=row_major`
 
 **示例：**
 
@@ -158,13 +158,13 @@ For each row i:
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - 所有操作数必须使用 `loc=vec`。
   - 数据 tile（src0、src1、dst）的元素类型必须一致，且为以下之一：`i8`、`i16`、`i32`、`f16`、`f32`、`bf16`。
   - 索引 tile（src0Idx、src1Idx）的元素类型必须相同，允许 signless `i8`、`i16` 或 `i32`。
 
-- **实现检查（A5）**
-  - 同 A2A3 约束。
+- **实现检查（Ascend 950PR&950DT系列产品）**
+  - 同 Atlas A2系列产品/Atlas A3系列产品 约束。
   - 额外要求所有操作数必须使用 `blayout=row_major`。
 
 **示例：**
@@ -218,14 +218,14 @@ For each element (i, j):
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - 基础 `vec` → `vec` 和 `mat` → `left`/`right` 形式使用相同元素类型，支持 `i8`、`f16`、`bf16`、`f32`。
   - 支持 `vec` → `vec`、`mat` → `left`/`right`，以及 `acc` → `mat`。累加器转换形式支持 `f32` → `f16`/`bf16`；附加量化参数见本章 `fp` 形式。
   - src 的 layout/fractal 必须与 dst 支持的组合兼容
   - 运行时约束：`indexRow + dst.rows <= src.rows` 且 `indexCol + dst.cols <= src.cols`
   - `mat` → `left`/`right` 的目标分别使用 `row_major/row_major` 和 `row_major/col_major` 布局；`acc` → `mat` 的源和目标使用 `col_major/row_major`，目标 `fractal=512`。
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - 基础非累加器形式使用相同元素类型；累加器形式可进行支持的精度转换，附加量化参数见本章 `fp` 形式。
   - 支持 Mat->Left/Right/Scaling、Vec->Mat、Acc->Mat/Vec，以及
     ND 布局的 Vec->Vec；ND 指 `blayout=row_major, slayout=none_box`
@@ -277,12 +277,12 @@ For each element (i, j):
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - 位置必须为 `src=acc`、`fp=scaling`、`dst=mat`。
   - 支持的类型对：`(src=f32, dst=i8)` 或 `(src=i32, dst=i8/f16/i16)`。
   - `dst` 的 fractal 必须为 512。
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - 位置必须为 `src=acc`、`fp=scaling`，`dst` 可为 `mat` 或 `vec`。
   - 支持的类型对：`(src=f32, dst=i8/fp8/f16/bf16/f32)` 或 `(src=i32, dst=i8/f16/bf16)`。
   - 无 fractal 512 限制。
@@ -330,13 +330,13 @@ For each element (i, j):
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - `src`、`dst` 必须为 rank-2 `tile_buf`，`indexRow`、`indexCol` 必须非负，且插入区域不能越过 `dst` 静态边界
   - 支持 Vec->Vec（同元素类型，`i8`/`f16`/`bf16`/`f32`）和 Acc->Mat
   - Acc->Mat 要求两端为 NZ 布局（`col_major` + `row_major`），目标 `fractal=512`
   - `fp` 与 `preQuantScalar` 互斥，且仅适用于 `src.loc=acc`；`fp` 必须使用 `loc=scaling`
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - 支持 Acc->Mat/Vec、Vec->Mat 和 Vec->Vec
   - Vec->Vec 两端布局必须同为 ND（`row_major` + `none_box`）或同为 NZ（`col_major` + `row_major`）
   - Vec->Mat 的目标必须为 NZ；源可为 ND 或 NZ，且源、目标元素类型相同
@@ -389,12 +389,12 @@ For each element (i, j):
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - 位置必须为 `src=acc`、`fp=scaling`、`dst=mat`。
   - 支持的类型对：`(src=f32, dst=i8)` 或 `(src=i32, dst=i8/f16/i16)`。
   - `dst` 的 fractal 必须为 512。
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - 位置必须为 `src=acc`、`fp=scaling`，`dst` 可为 `mat` 或 `vec`。
   - 支持的类型对：`(src=f32, dst=i8/fp8/f16/bf16/f32)` 或 `(src=i32, dst=i8/f16/bf16)`。
   - 无 fractal 512 限制。
@@ -513,12 +513,12 @@ P1000:
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - 索引形式：`src` 和 `dst` 元素类型必须一致，且为 `i16`、`i32`、`f16` 或 `f32` 之一。`indices` 元素类型必须为 `i32`，物理形状和有效形状必须为静态值。`dst` 的 `valid_shape[1]` 必须等于 `dst.cols`。
   - 比较形式：`dst` 和 `cdst` 元素类型必须为 `i32`。`src` 元素类型必须为 `f16`、`f32`，或当 `cmpMode=eq` 时可为 `i32`；`src` 的物理形状必须为静态值。`kValue` 类型必须与 `src` 元素类型一致。`cmpMode` 必须为 `eq` 或 `gt`。`src`、`dst`、`cdst` 必须为 `loc=vec`。
   - 掩码形式：`src` 元素大小必须为 2 或 4 字节。`src` 和 `dst` 必须使用 `loc=vec` 和 `blayout=row_major`。`src` 和 `dst` 元素大小必须一致。`dst` 的 `valid_shape[1]` 必须等于 `dst.cols`。
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - 索引形式：`src` 和 `dst` 元素类型必须一致，且为 `i8`、`i16`、`i32`、`f16` 或 `f32` 之一。`indices` 元素类型可为 `i16` 或 `i32`。`dst` 的 `valid_shape[1]` 必须等于 `dst.cols`。
   - 比较形式：`dst` 和 `cdst` 元素类型必须为 `i32`。`src` 元素类型必须为 `i16`、`i32`、`f16` 或 `f32` 之一。`kValue` 类型必须与 `src` 元素类型一致。`cmpMode` 必须为 `eq` 或 `gt`。`src`、`dst`、`cdst` 必须为 `loc=vec`。
   - 掩码形式：`src` 元素大小必须为 1、2 或 4 字节。`src` 和 `dst` 必须使用 `loc=vec` 和 `blayout=row_major`。`src`/`dst` 元素类型必须为 `i8`、`i16`、`i32`、`f16`、`bf16`、`f32` 或 fp8 类支持类型之一。`src` 和 `dst` 元素大小必须一致。`dst` 的 `valid_shape[1]` 必须等于 `dst.cols`。
@@ -568,14 +568,14 @@ offsets 的每个元素给出源侧一个 32 字节块的首字节地址：
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - `dst` 和 `offsets` 必须使用行主序布局（`blayout=row_major`）。
   - `dst` 元素大小必须为 1、2 或 4 字节。
   - `offsets` 元素类型必须为 32 位整数（`i32`/`ui32`）。
   - `offsets` 的有效行数必须等于 `dst` 的有效行数。
   - `offsets` 的有效列数必须为紧凑的 32 字节块地址个数并按 8 对齐：`align_up(ceil(dst 有效列数 / (32 / sizeof(dst 元素类型))), 8)`。
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - `dst` 元素大小必须为 1、2 或 4 字节。
   - 无行主序布局要求。
 
@@ -703,11 +703,11 @@ P0010 -> [0, a, 0, 0, 0, b, 0, 0, 0, c, 0, 0, 0, d, 0, 0]
 
 **约束：**
 
-- A3 和 A5 均支持索引形式及掩码形式；indexes 和 maskPattern 必须且只能选择其一。
+- Atlas A3系列产品 和 Ascend 950PR&950DT系列产品 均支持索引形式及掩码形式；indexes 和 maskPattern 必须且只能选择其一。
 - src/dst 均位于 `vec`，元素类型一致，支持 8/16/32 位整数及 `f16`、`bf16`、`f32`。
 - 索引形式：indexes 位于 `vec`，与 src 有效形状相同；dst 每维有效尺寸不小于 src。4 字节数据使用 32 位索引，2 字节和 1 字节数据使用 16 位索引。
 - 每个索引表示从 dst 存储起点计数的目标元素位置，不是行号或字节偏移。用户应提供范围内且互不冲突的索引；操作不进行逐值越界检查，不保证重复目标索引的覆盖顺序。
-- A5 索引形式先将目标清零，再写入索引命中的位置；未命中位置为零。
+- Ascend 950PR&950DT系列产品 索引形式先将目标清零，再写入索引命中的位置；未命中位置为零。
 - 掩码形式：src/dst 均使用 `blayout=row_major`。设扩展因子为 F：`P0101/P1010` 为 2，单个 1 的四位模式为 4，`P1111` 为 1。
 - `axis="row"` 要求有效行数相同，`dst.valid_cols=F*src.valid_cols`；`axis="col"` 要求有效列数相同，`dst.valid_rows=F*src.valid_rows`。掩码未命中的位置补零。
 
@@ -729,7 +729,7 @@ pto.tscatter ins(%values, %indexes :
 ```
 
 ```mlir
-// A3/A5：沿每一行的列方向展开
+// Atlas A3系列产品/Ascend 950PR&950DT系列产品：沿每一行的列方向展开
 pto.tscatter ins(%src, {maskPattern = #pto.mask_pattern<P0101>} :
                  !pto.tile_buf<loc=vec, dtype=f16, rows=1, cols=32,
                      v_row=1, v_col=32, blayout=row_major, slayout=none_box,

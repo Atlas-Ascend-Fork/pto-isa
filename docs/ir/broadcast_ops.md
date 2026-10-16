@@ -63,7 +63,7 @@ For each element (i, j):
 
 **约束：**
 
-- **实现检查（A2A3/A5）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品/Ascend 950PR&950DT系列产品）**
   - `src` 和 `dst` 必须使用 `loc=vec`
   - `src` 和 `dst` 必须使用 ND-style 布局（`blayout=row_major`，`slayout=none_box`）
   - 元素类型一致：`dst_type == src_type`
@@ -107,7 +107,7 @@ For each element (i, j):
 
 **约束：**
 
-- **实现检查（A2A3/A5）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品/Ascend 950PR&950DT系列产品）**
   - `src` 和 `dst` 必须使用 `loc=vec`
   - `src` 必须使用 `slayout=none_box`
   - `dst` 必须使用 ND-style 布局（`blayout=row_major`，`slayout=none_box`）
@@ -155,14 +155,14 @@ For each element (i, j):
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - `src0`、`src1`、`dst` 元素类型一致
   - 数据类型：`i16`、`i32`、`f16`、`f32`
   - `dst` 使用 `blayout=row_major`
   - `src0` 与 `dst` 具有相同的 shape 和 valid_shape
   - 可选 `tmp` 操作数：用于 pto-isa 中需要 tmp 的重载
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - `src0`、`src1`、`dst` 元素类型一致
   - 数据类型：`i8`、`i16`、`i32`、`f16`、`f32`
   - `dst` 使用 `blayout=row_major`
@@ -214,7 +214,7 @@ For each element (i, j):
 
 **约束：**
 
-- **实现检查（A2A3/A5）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品/Ascend 950PR&950DT系列产品）**
   - `src0`、`src1`、`dst` 元素类型一致
   - 数据类型：`f16`、`f32`
   - `dst` 使用 `blayout=row_major`
@@ -277,7 +277,7 @@ For each element (i, j):
 
 **约束：**
 
-- **实现检查（A2A3/A5）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品/Ascend 950PR&950DT系列产品）**
   - `src0`、`src1`、`dst` 元素类型一致
   - 仅支持浮点类型：`f16`、`f32`
   - `dst` 使用 `blayout=row_major`
@@ -341,14 +341,14 @@ For each element (i, j):
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - `src0`、`src1`、`dst` 元素类型一致
   - 数据类型：`i16`、`i32`、`f16`、`f32`
   - `src0` 与 `dst` 具有相同的 shape 和 valid_shape
   - `src0`、`src1`、`dst` 使用 `blayout=row_major`
   - `src1 valid_shape[1] == dst valid_shape[1]`
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - `src0`、`src1`、`dst` 元素类型一致
   - 数据类型：`i8`、`i16`、`i32`、`f16`、`f32`
   - `src0` 与 `dst` 具有相同的 shape 和 valid_shape
@@ -397,14 +397,14 @@ For each element (i, j):
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - `src0`、`src1`、`dst` 元素类型一致
   - 数据类型：`i16`、`i32`、`f16`、`f32`
   - `src0` 与 `dst` 具有相同的 shape 和 valid_shape
   - `src0`、`src1`、`dst` 使用 `blayout=row_major`
   - `src1 valid_shape[1] == dst valid_shape[1]`
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - `src0`、`src1`、`dst` 元素类型一致
   - 数据类型：`i8`、`i16`、`i32`、`f16`、`f32`
   - `src0` 与 `dst` 具有相同的 shape 和 valid_shape
@@ -453,14 +453,14 @@ For each element (i, j):
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - `src0`、`src1`、`dst` 元素类型一致
   - 数据类型：`i16`、`i32`、`f16`、`f32`
   - `src0` 与 `dst` 具有相同的 shape 和 valid_shape
   - `src0`、`src1`、`dst` 使用 `blayout=row_major`
   - `src1 valid_shape[1] == dst valid_shape[1]`
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - `src0`、`src1`、`dst` 元素类型一致
   - 数据类型：`i8`、`i16`、`i32`、`f16`、`f32`
   - `src0` 与 `dst` 具有相同的 shape 和 valid_shape
@@ -509,14 +509,14 @@ For each element (i, j):
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - `src0`、`src1`、`dst` 元素类型一致
   - 数据类型：`i16`、`i32`、`f16`、`f32`
   - `src0` 与 `dst` 具有相同的 shape 和 valid_shape
   - `src0`、`src1`、`dst` 使用 `blayout=row_major`
   - `src1 valid_shape[1] == dst valid_shape[1]`
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - `src0`、`src1`、`dst` 元素类型一致
   - 数据类型：`i8`、`i16`、`i32`、`f16`、`f32`
   - `src0` 与 `dst` 具有相同的 shape 和 valid_shape
@@ -572,7 +572,7 @@ For each element (i, j):
 
 **约束：**
 
-- **实现检查（A2A3/A5）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品/Ascend 950PR&950DT系列产品）**
   - `src0`、`src1`、`dst` 元素类型一致
   - 仅支持浮点类型：`f16`、`f32`
   - `src0` 与 `dst` 具有相同的 shape 和 valid_shape
@@ -621,7 +621,7 @@ For each element (i, j):
 
 **约束：**
 
-- **实现检查（A2A3/A5）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品/Ascend 950PR&950DT系列产品）**
   - `src0`、`src1`、`dst` 元素类型一致
   - 仅支持浮点类型：`f16`、`f32`
   - `src0` 与 `dst` 具有相同的 shape 和 valid_shape
@@ -670,14 +670,14 @@ For each element (i, j):
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - `src0`、`src1`、`dst` 元素类型一致
   - 数据类型：`i16`、`i32`、`f16`、`f32`
   - `src0` 与 `dst` 具有相同的 shape 和 valid_shape
   - `src0`、`src1`、`dst` 使用 `blayout=row_major`
   - `src1 valid_shape[1] == dst valid_shape[1]`
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - `src0`、`src1`、`dst` 元素类型一致
   - 数据类型：`i8`、`i16`、`i32`、`f16`、`f32`
   - `src0` 与 `dst` 具有相同的 shape 和 valid_shape
@@ -726,7 +726,7 @@ For each element (i, j):
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - `src0`、`src1`、`dst` 元素类型一致
   - 数据类型：`i16`、`i32`、`f16`、`f32`
   - `src0` 与 `dst` 具有相同的 shape 和 valid_shape
@@ -734,7 +734,7 @@ For each element (i, j):
   - `src1 valid_shape[0] == dst valid_shape[0]`
   - `src1` 为 row_major 时：`src1 valid_shape[1] == 32 / sizeof(dtype)`；否则：`src1 valid_shape[1] == 1`
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - `src0`、`src1`、`dst` 元素类型一致
   - 数据类型：`i8`、`i16`、`i32`、`f16`、`f32`
   - `src0` 与 `dst` 具有相同的 shape 和 valid_shape
@@ -784,7 +784,7 @@ For each element (i, j):
 
 **约束：**
 
-- **实现检查（A2A3/A5）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品/Ascend 950PR&950DT系列产品）**
   - `src0`、`src1`、`dst` 元素类型一致
   - 仅支持浮点类型：`f16`、`f32`
   - `dst` 使用 `blayout=row_major`
@@ -832,13 +832,13 @@ For each element (i, j):
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - `src0`、`src1`、`dst` 元素类型一致
   - 数据类型：`i16`、`i32`、`f16`、`f32`
   - `dst` 使用 `blayout=row_major`
   - 可选 `tmp` 操作数：用于 pto-isa 中需要 tmp 的重载
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - `src0`、`src1`、`dst` 元素类型一致
   - 数据类型：`i8`、`i16`、`i32`、`f16`、`bf16`、`f32`
   - `dst` 使用 `blayout=row_major`
@@ -888,13 +888,13 @@ For each element (i, j):
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - `src0`、`src1`、`dst` 元素类型一致
   - 数据类型：`i16`、`i32`、`f16`、`f32`
   - `dst` 使用 `blayout=row_major`
   - 可选 `tmp` 操作数：用于 pto-isa 中需要 tmp 的重载
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - `src0`、`src1`、`dst` 元素类型一致
   - 数据类型：`i8`、`i16`、`i32`、`f16`、`bf16`、`f32`
   - `dst` 使用 `blayout=row_major`

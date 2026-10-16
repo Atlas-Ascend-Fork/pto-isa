@@ -52,7 +52,7 @@ dst = sort(src, idx)
 
 **约束：**
 
-- **实现检查（A2A3/A5）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品/Ascend 950PR&950DT系列产品）**
   - `src` 和 `dst` 元素类型必须一致，且为 `f16` 或 `f32`。
   - `idx` 元素类型必须为 32 位无符号整数（MLIR 中表示为 `ui32` 或 `i32`）。
   - `src`、`dst` 和 `idx` 必须为 `loc=vec` 和 `blayout=row_major`。
@@ -122,7 +122,7 @@ format2：
 
 **约束：**
 
-- **实现检查（A2A3/A5）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品/Ascend 950PR&950DT系列产品）**
   - format1：元素类型必须为 `f16` 或 `f32`，且 `src` 和 `dst` 元素类型必须一致。`src` 和 `dst` 必须为 rank-2，且 `rows == 1`（数据存储在单行中）。`src` 和 `dst` 的 `cols` 必须一致。`blockLen` 必须大于 0 且为 64 的整数倍。`src` 有效列数必须为 `blockLen * 4` 的整数倍。`repeatTimes = src 有效列数 / (blockLen * 4)` 必须在 `[1, 255]` 范围内。
   - format2：接受 2 路、3 路或 4 路归并。`dst` 和 `tmp` 元素类型和 shape 必须一致。所有 `src` 的元素类型必须与 `dst`/`tmp` 一致，且为 `f16` 或 `f32`。所有 tile 必须为 rank-2，且 `rows == 1`。`tmp.cols >= dst.cols`。`executed` 必须为 `vector<4xi16>` 类型。
 
@@ -183,10 +183,10 @@ For each row i:
 
 **约束：**
 
-- **实现检查（A2A3）**
-  - 不支持，仅 A5 可用。
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
+  - 不支持，仅 Ascend 950PR&950DT系列产品 可用。
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - `src` 元素类型必须为 `ui16`。
   - `idx` 元素类型必须为 `ui8`，且为单列（cols=1）。
   - `dst` 元素类型必须为 `ui32`，且列数为 256。

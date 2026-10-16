@@ -70,13 +70,13 @@ For each element (i, j):
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - tile 元素类型必须为以下之一：`i32`、`i16`、`f16` 或 `f32`。
   - tile 必须使用 `loc=vec`。
   - 有效区域边界：`valid row <= rows` 且 `valid column <= cols`。
   - `src` 和 `dst` 必须具有相同的有效区域：`src valid row == dst valid row` 且 `src valid column == dst valid column`。
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - tile 元素类型必须为以下之一：`i8`、`i16`、`i32`、`f16`、`f32` 或 `bf16`。
   - tile 必须使用 `loc=vec`。
   - 有效区域边界：`valid row <= rows` 且 `valid column <= cols`。
@@ -122,7 +122,7 @@ For each element (i, j):
 
 **约束：**
 
-- **实现检查（A2A3/A5）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品/Ascend 950PR&950DT系列产品）**
   - `src0`、`src1` 和 `dst` 必须为 PTO shaped-like 类型。
   - `src0`、`src1` 和 `dst` 必须具有相同的 shape。
   - 实现使用 `dst valid row` / `dst valid column` 作为迭代域。
@@ -169,14 +169,14 @@ For each element (i, j):
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - `src` 和 `dst` 必须具有相同的元素类型。
   - 元素类型必须为 8-bit 或 16-bit 无符号整数类型：`i8`、`i16`。
   - `src` 和 `dst` 必须使用行优先布局（`blayout=row_major`）。
   - `src` 和 `dst` 必须具有相同的有效区域：`src valid row == dst valid row` 且 `src valid column == dst valid column`。
   - 源 tile 和目标 tile 不可指向同一块内存。
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - `src` 和 `dst` 必须具有相同的元素类型。
   - 元素类型必须为 8-bit、16-bit 或 32-bit 无符号整数类型：`i8`、`i16`、`i32`。
   - `src` 和 `dst` 必须使用行优先布局（`blayout=row_major`）。
@@ -231,13 +231,13 @@ For each element (i, j):
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - 输入 tile 元素类型必须为以下之一：`i32`、`f16`、`f32`、`i16`。
   - `src` 和 `dst` 必须使用 `loc=vec`。
   - 有效区域边界：`src valid row <= src.rows` 且 `src valid column <= src.cols`。
   - `src` 和 `dst` 必须具有相同的 valid row。
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - 输入 tile 元素类型必须为以下之一：`i32`、`f16`、`f32`、`i16`、`i8`。
   - `src` 和 `dst` 必须使用 `loc=vec`。
   - 有效区域边界：`src valid row <= src.rows`、`src valid column <= src.cols`、`dst valid row <= dst.rows`、`dst valid column <= dst.cols`。
@@ -295,20 +295,20 @@ For each element (i, j):
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - tile 元素类型必须为以下之一：`i32`、`i16`、`f16`、`f32`。
   - tile 必须使用 `loc=vec`。
   - 有效区域边界：`valid row <= rows` 且 `valid column <= cols`。
   - `src` 和 `dst` 必须具有相同的有效区域：`src valid row == dst valid row` 且 `src valid column == dst valid column`。
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - tile 元素类型必须为以下之一：`i8`、`i16`、`i32`、`f16`、`f32`。
   - tile 必须使用 `loc=vec`。
   - 有效区域边界：`valid row <= rows` 且 `valid column <= cols`。
   - `src` 和 `dst` 必须具有相同的有效区域：`src valid row == dst valid row` 且 `src valid column == dst valid column`。
 
 - **特殊行为**
-  - 除零行为为目标定义；在 A5 上 tile/scalar 形式映射为乘倒数，`scalar == 0` 时结果为 `+inf`。
+  - 除零行为为目标定义；在 Ascend 950PR&950DT系列产品 上 tile/scalar 形式映射为乘倒数，`scalar == 0` 时结果为 `+inf`。
 
 **示例：**
 
@@ -357,12 +357,12 @@ For each element (i, j):
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - tile 元素类型必须为以下之一：`i32`、`i16`、`f16` 或 `f32`。
   - tile 必须使用 `loc=vec` 或 `loc=mat`。
   - 若 `loc=vec`：tile 必须使用行优先布局（`blayout=row_major`）；有效区域边界：`valid row <= rows` 且 `valid column <= cols`。
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - tile 元素类型必须为以下之一：`i8`、`i16`、`i32`、`f16`、`bf16` 或 `f32`。
   - tile 必须使用 `loc=vec` 或 `loc=mat`。
   - 若 `loc=vec`：有效区域边界：`valid row <= rows` 且 `valid column <= cols`。
@@ -404,13 +404,13 @@ For each element (i, j):
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - tile 元素类型必须为以下之一：`f16`、`f32`。
   - tile 必须使用 `loc=vec`。
   - 有效区域边界：`0 < valid row <= rows` 且 `0 < valid column <= cols`。
   - `src` 和 `dst` 必须具有相同的 `validRow/validCol`。
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - tile 元素类型必须为以下之一：`f16`、`f32`。
   - tile 必须使用 `loc=vec`。
   - `slope` 必须为 `f32` 类型。
@@ -456,13 +456,13 @@ For each element (i, j):
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - tile 元素类型必须为以下之一：`i32`、`i16`、`f16`、`f32`。
   - tile 必须使用 `loc=vec`。
   - 有效区域边界：`valid row <= rows` 且 `valid column <= cols`。
   - `src` 和 `dst` 必须具有相同的有效区域：`src valid row == dst valid row` 且 `src valid column == dst valid column`。
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - tile 元素类型必须为以下之一：`i8`、`i16`、`i32`、`f16`、`bf16`、`f32`。
   - tile 必须使用 `loc=vec`。
   - 有效区域边界：`valid row <= rows` 且 `valid column <= cols`。
@@ -507,13 +507,13 @@ For each element (i, j):
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - tile 元素类型必须为以下之一：`i32`、`i16`、`f16`、`f32`。
   - tile 必须使用 `loc=vec`。
   - 有效区域边界：`valid row <= rows` 且 `valid column <= cols`。
   - `src` 和 `dst` 必须具有相同的有效区域：`src valid row == dst valid row` 且 `src valid column == dst valid column`。
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - tile 元素类型必须为以下之一：`i8`、`i16`、`i32`、`f16`、`f32`、`bf16`。
   - tile 必须使用 `loc=vec`。
   - 有效区域边界：`valid row <= rows` 且 `valid column <= cols`。
@@ -558,13 +558,13 @@ For each element (i, j):
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - tile 元素类型必须为以下之一：`i32`、`i16`、`f16`、`f32`。
   - tile 必须使用 `loc=vec`。
   - 有效区域边界：`valid row <= rows` 且 `valid column <= cols`。
   - `src` 和 `dst` 必须具有相同的有效区域：`src valid row == dst valid row` 且 `src valid column == dst valid column`。
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - tile 元素类型必须为以下之一：`i8`、`i16`、`i32`、`f16`、`f32`、`bf16`。
   - tile 必须使用 `loc=vec`。
   - 有效区域边界：`valid row <= rows` 且 `valid column <= cols`。
@@ -609,14 +609,14 @@ For each element (i, j):
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - `src` 和 `dst` 必须具有相同的元素类型。
   - 元素类型必须为 8-bit 或 16-bit 无符号整数类型：`i8`、`i16`。
   - `src` 和 `dst` 必须使用行优先布局（`blayout=row_major`）。
   - `src` 和 `dst` 必须具有相同的有效区域：`src valid row == dst valid row` 且 `src valid column == dst valid column`。
   - 源 tile 和目标 tile 不可指向同一块内存。
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - `src` 和 `dst` 必须具有相同的元素类型。
   - 元素类型必须为 8-bit、16-bit 或 32-bit 无符号整数类型：`i8`、`i16`、`i32`。
   - `src` 和 `dst` 必须使用行优先布局（`blayout=row_major`）。
@@ -625,7 +625,7 @@ For each element (i, j):
 **示例：**
 
 ```mlir
-// 仅 A5 支持：i32 元素类型
+// 仅 Ascend 950PR&950DT系列产品 支持：i32 元素类型
 pto.tors ins(%a, %s : !pto.tile_buf<loc=vec, dtype=i32, rows=16, cols=16,
             v_row=16, v_col=16, blayout=row_major, slayout=none_box,
             fractal=512, pad=0>, i32)
@@ -633,7 +633,7 @@ pto.tors ins(%a, %s : !pto.tile_buf<loc=vec, dtype=i32, rows=16, cols=16,
             v_row=16, v_col=16, blayout=row_major, slayout=none_box,
             fractal=512, pad=0>)
 
-// A3 和 A5 均支持：i16 元素类型
+// Atlas A3系列产品 和 Ascend 950PR&950DT系列产品 均支持：i16 元素类型
 pto.tors ins(%a, %s : !pto.tile_buf<loc=vec, dtype=i16, rows=16, cols=16,
             v_row=16, v_col=16, blayout=row_major, slayout=none_box,
             fractal=512, pad=0>, i16)
@@ -671,7 +671,7 @@ For each element (i, j):
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - `src`/`dst` 元素类型必须匹配，且必须为 `i32` 或 `f32`。
   - `scalar` 类型必须与 tile 元素类型匹配。
   - `tmp` 元素类型必须与 `dst` 匹配。
@@ -679,7 +679,7 @@ For each element (i, j):
   - `src` 和 `dst` 必须具有相同的 `validRow/validCol`。
   - `tmp` 必须提供至少 `1` 个 valid row，且 `tmp.validCol >= dst.validCol`。
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - `src`/`dst` 元素类型必须匹配，且必须为以下之一：`i32`、`i16`、`f16`、`f32`。
   - `scalar` 类型必须与 tile 元素类型匹配。
   - `tmp` 元素类型必须与 `dst` 匹配。
@@ -734,13 +734,13 @@ For each element (i, j):
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - `src` 和 `dst` 必须具有相同的元素类型。
   - 元素类型必须为 16-bit 或 32-bit 类型：`i16`、`i32`、`f16` 或 `f32`。
   - `src` 和 `dst` 必须使用行优先布局（`blayout=row_major`）。
   - `src` 和 `dst` 必须具有相同的有效区域：`src valid row == dst valid row` 且 `src valid column == dst valid column`。
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - `src` 和 `dst` 必须具有相同的元素类型。
   - 元素类型必须为 8-bit、16-bit 或 32-bit 类型：`i8`、`i16`、`i32`、`f16` 或 `f32`。
   - `src` 和 `dst` 必须使用行优先布局（`blayout=row_major`）。
@@ -791,7 +791,7 @@ For each element (i, j):
 
 **约束：**
 
-- **实现检查（A2A3/A5）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品/Ascend 950PR&950DT系列产品）**
   - `src` 和 `dst` 必须具有相同的元素类型，且该元素类型必须为整型；verifier 不限制整数位宽。
   - `scalar` 必须为整型；当其取值在编译期已知时，必须非负。
   - `src` 和 `dst` 的 `valid_shape` 必须落在静态 shape 范围内。
@@ -839,14 +839,14 @@ For each element (i, j):
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - `src` 和 `dst` 必须具有相同的元素类型。
   - 元素类型必须为以下之一：`i16`、`i32`。
   - `src` 和 `dst` 必须使用 `loc=vec`。
   - `src` 和 `dst` 必须使用行优先布局（`blayout=row_major`）。
   - `src` 和 `dst` 必须具有相同的有效区域：`src valid row == dst valid row` 且 `src valid column == dst valid column`。
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - `src` 和 `dst` 必须具有相同的元素类型。
   - 元素类型必须为以下之一：`i8`、`i16`、`i32`。
   - `src` 和 `dst` 必须使用 `loc=vec`。
@@ -892,13 +892,13 @@ For each element (i, j):
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - tile 元素类型必须为以下之一：`i32`、`i16`、`f16` 或 `f32`。
   - tile 必须使用 `loc=vec`。
   - 有效区域边界：`valid row <= rows` 且 `valid column <= cols`。
   - `src` 和 `dst` 必须具有相同的有效区域：`src valid row == dst valid row` 且 `src valid column == dst valid column`。
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - tile 元素类型必须为以下之一：`i8`、`i16`、`i32`、`f16`、`f32`、`bf16`。
   - tile 必须使用 `loc=vec`。
   - 有效区域边界：`valid row <= rows` 且 `valid column <= cols`。
@@ -944,7 +944,7 @@ For each element (i, j):
 
 **约束：**
 
-- **实现检查（A2A3/A5）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品/Ascend 950PR&950DT系列产品）**
   - `src0`、`src1` 和 `dst` 必须为 PTO shaped-like 类型。
   - `src0`、`src1` 和 `dst` 必须具有相同的 rank。
   - 实现使用 `dst valid row` / `dst valid column` 作为迭代域。
@@ -985,22 +985,22 @@ For each element (i, j):
 | ---- | ---- | ----------- |
 | `src` | `pto.tile_buf` | 源 tile buffer |
 | `scalar` | `AnySignlessInteger` | 整数标量操作数 |
-| `tmp` | `pto.tile_buf` | 临时 scratch tile（A2/A3 上用于计算；A5 codegen 可能忽略，但 PTO ISA 操作数仍然必需） |
+| `tmp` | `pto.tile_buf` | 临时 scratch tile（Atlas A2系列产品/Atlas A3系列产品 上用于计算；Ascend 950PR&950DT系列产品 codegen 可能忽略，但 PTO ISA 操作数仍然必需） |
 | `dst` | `pto.tile_buf` | 目标 tile buffer |
 
 **返回值：** 无。以 DPS 的形式写入 `dst`。
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - `src` 和 `dst` 必须具有相同的元素类型。
   - 元素类型必须为 8-bit 或 16-bit 无符号整数类型：`i8`、`i16`。
   - `src` 和 `dst` 必须使用行优先布局（`blayout=row_major`）。
   - `src` 和 `dst` 必须具有相同的有效区域：`src valid row == dst valid row` 且 `src valid column == dst valid column`。
-  - DPS 形式接受一个 `tmp` scratch tile。在 A2/A3 上用于实际计算；在 A5 上 codegen 可能忽略，但 PTO ISA 操作数仍然必需。
+  - DPS 形式接受一个 `tmp` scratch tile。在 Atlas A2系列产品/Atlas A3系列产品 上用于实际计算；在 Ascend 950PR&950DT系列产品 上 codegen 可能忽略，但 PTO ISA 操作数仍然必需。
   - 源 tile 和目标 tile 不可指向同一块内存。
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - `src` 和 `dst` 必须具有相同的元素类型。
   - 元素类型必须为 8-bit、16-bit 或 32-bit 无符号整数类型：`i8`、`i16`、`i32`。
   - `src` 和 `dst` 必须使用行优先布局（`blayout=row_major`）。
@@ -1009,7 +1009,7 @@ For each element (i, j):
 **示例：**
 
 ```mlir
-// 仅 A5 支持：i32 元素类型
+// 仅 Ascend 950PR&950DT系列产品 支持：i32 元素类型
 pto.txors ins(%a, %s, %tmp : !pto.tile_buf<loc=vec, dtype=i32, rows=16, cols=16,
              v_row=16, v_col=16, blayout=row_major, slayout=none_box,
              fractal=512, pad=0>, i32,
@@ -1020,7 +1020,7 @@ pto.txors ins(%a, %s, %tmp : !pto.tile_buf<loc=vec, dtype=i32, rows=16, cols=16,
              v_row=16, v_col=16, blayout=row_major, slayout=none_box,
              fractal=512, pad=0>)
 
-// A3 和 A5 均支持：i16 元素类型
+// Atlas A3系列产品 和 Ascend 950PR&950DT系列产品 均支持：i16 元素类型
 pto.txors ins(%a, %s, %tmp : !pto.tile_buf<loc=vec, dtype=i16, rows=16, cols=16,
              v_row=16, v_col=16, blayout=row_major, slayout=none_box,
              fractal=512, pad=0>, i16,
@@ -1060,7 +1060,7 @@ For each element (i, j):
 
 **约束：**
 
-- **实现检查（A2A3/A5）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品/Ascend 950PR&950DT系列产品）**
   - `src` 和 `dst` 必须具有相同的元素类型和相同的有效区域。
   - `src` 和 `dst` 必须使用行优先布局（`blayout=row_major`）。
   - `scalar` 的类型必须与 tile 元素类型一致。
@@ -1109,12 +1109,12 @@ For each element (i, j):
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - `src` 和 `dst` 的元素类型必须为 `f16` 或 `f32`。
   - `src` 和 `dst` 的元素类型必须一致，或使用 `src=f16`、`dst=f32` 的扩展组合。
   - 所有 tile 必须使用 `loc=vec`。
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - `src` 和 `dst` 的元素类型必须为 `f16`、`bf16` 或 `f32`。
   - `src` 和 `dst` 的元素类型必须一致，或使用 `src=f16`、`dst=f32` 的扩展组合。
   - 所有 tile 必须使用 `loc=vec`。

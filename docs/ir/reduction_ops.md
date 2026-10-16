@@ -60,7 +60,7 @@ For each row i:
 
 **约束：**
 
-- **实现检查（A2A3/A5）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品/Ascend 950PR&950DT系列产品）**
   - `src` 和 `dst` 必须使用 `loc=vec`
   - `src` 使用 ND-style 布局（`blayout=row_major`，`slayout=none_box`）
   - `dst` 布局：推荐使用 DN-style 1D 列向量（`cols=1`，`blayout=col_major`）；也兼容 ND-style 2D tile（`valid column == 1`）
@@ -108,7 +108,7 @@ For each row i:
 
 **约束：**
 
-- **实现检查（A2A3/A5）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品/Ascend 950PR&950DT系列产品）**
   - `src` 和 `dst` 必须使用 `loc=vec`
   - `src` 使用 ND-style 布局（`blayout=row_major`，`slayout=none_box`）
   - `tmp` 必须与 `src` 具有相同的 shape 和元素类型
@@ -158,7 +158,7 @@ For each row i:
 
 **约束：**
 
-- **实现检查（A2A3/A5）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品/Ascend 950PR&950DT系列产品）**
   - `src` 和 `dst` 必须使用 `loc=vec`
   - `src` 使用 ND-style 布局（`blayout=row_major`，`slayout=none_box`）
   - `dst` 布局：推荐使用 DN-style 1D 列向量（`cols=1`，`blayout=col_major`）；也兼容 ND-style 2D tile（`valid column == 1`）
@@ -206,7 +206,7 @@ For each row i:
 
 **约束：**
 
-- **实现检查（A2A3/A5）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品/Ascend 950PR&950DT系列产品）**
   - `src` 和 `dst` 必须使用 `loc=vec`
   - `src` 使用 ND-style 布局（`blayout=row_major`，`slayout=none_box`）
   - `dst` 布局：推荐使用 DN-style 1D 列向量（`cols=1`，`blayout=col_major`）；也兼容 ND-style 2D tile（`valid column == 1`）
@@ -257,7 +257,7 @@ For each row i:
 
 **约束：**
 
-- **实现检查（A2A3/A5）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品/Ascend 950PR&950DT系列产品）**
   - `src`、`tmp`、`dst` 必须使用 `loc=vec`
   - `src` 使用 ND-style 布局（`blayout=row_major`，`slayout=none_box`）
   - `tmp` 必须与 `src` 具有相同的 shape、valid shape 和元素类型
@@ -310,7 +310,7 @@ For each row i:
 
 **约束：**
 
-- **实现检查（A2A3/A5）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品/Ascend 950PR&950DT系列产品）**
   - `src`、`tmp`、`dst` 必须使用 `loc=vec`
   - `src` 使用 ND-style 布局（`blayout=row_major`，`slayout=none_box`）
   - `tmp` 必须与 `src` 具有相同的 shape、valid shape 和元素类型
@@ -369,14 +369,14 @@ For each column j:
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - `src`、`tmp`、`dst` 必须使用 `loc=vec`
   - 所有 tile 使用 ND-style 布局（`blayout=row_major`，`slayout=none_box`）
   - 数据类型：`f16`、`f32`、`i16`、`i32`
   - 元素类型一致：`dst_type == tmp_type == src_type`
   - `src valid column == dst valid column`
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - `src`、`tmp`、`dst` 必须使用 `loc=vec`
   - 所有 tile 使用 ND-style 布局（`blayout=row_major`，`slayout=none_box`）
   - 数据类型：`i8`、`i16`、`i32`、`f16`、`bf16`、`f32`
@@ -424,14 +424,14 @@ For each column j:
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - `src` 和 `dst` 必须使用 `loc=vec`
   - 所有 tile 使用 ND-style 布局（`blayout=row_major`，`slayout=none_box`）
   - 数据类型：`f16`、`f32`、`i16`、`i32`
   - 元素类型一致：`dst_type == src_type`
   - `src valid column == dst valid column`
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - `src` 和 `dst` 必须使用 `loc=vec`
   - 所有 tile 使用 ND-style 布局（`blayout=row_major`，`slayout=none_box`）
   - 数据类型：`i16`、`ui16`、`i32`、`ui32`、`f16`、`bf16`、`f32`
@@ -475,14 +475,14 @@ For each column j:
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - `src` 和 `dst` 必须使用 `loc=vec`
   - 所有 tile 使用 ND-style 布局（`blayout=row_major`，`slayout=none_box`）
   - 数据类型：`f16`、`f32`、`i16`、`i32`
   - 元素类型一致：`dst_type == src_type`
   - `src valid column == dst valid column`
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - `src` 和 `dst` 必须使用 `loc=vec`
   - 所有 tile 使用 ND-style 布局（`blayout=row_major`，`slayout=none_box`）
   - 数据类型：`i8`、`i16`、`i32`、`f16`、`bf16`、`f32`
@@ -527,14 +527,14 @@ For each column j:
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - `src` 和 `dst` 必须使用 `loc=vec`
   - 所有 tile 使用 ND-style 布局（`blayout=row_major`，`slayout=none_box`）
   - 数据类型：`f16`、`f32`、`i16`、`i32`
   - 元素类型一致：`dst_type == src_type`
   - `src valid column == dst valid column`
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - `src` 和 `dst` 必须使用 `loc=vec`
   - 所有 tile 使用 ND-style 布局（`blayout=row_major`，`slayout=none_box`）
   - 数据类型：`i8`、`i16`、`i32`、`f16`、`bf16`、`f32`
@@ -581,7 +581,7 @@ For each column j:
 
 **约束：**
 
-- **实现检查（A2A3/A5）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品/Ascend 950PR&950DT系列产品）**
   - `src`、`tmp`、`dst` 必须使用 `loc=vec`
   - 所有 tile 使用 ND-style 布局（`blayout=row_major`，`slayout=none_box`）
   - `tmp` 必须与 `src` 具有相同的 shape、valid shape 和元素类型
@@ -633,7 +633,7 @@ For each column j:
 
 **约束：**
 
-- **实现检查（A2A3/A5）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品/Ascend 950PR&950DT系列产品）**
   - `src`、`tmp`、`dst` 必须使用 `loc=vec`
   - 所有 tile 使用 ND-style 布局（`blayout=row_major`，`slayout=none_box`）
   - `tmp` 必须与 `src` 具有相同的 shape、valid shape 和元素类型

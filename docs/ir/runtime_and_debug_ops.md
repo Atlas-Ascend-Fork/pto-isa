@@ -307,7 +307,7 @@ print(src)  // 打印整个 tile 缓冲区的内容
 - **src 为 tile（`pto.tile_buf`）**
   - **元素类型** — 必须为以下之一：`f16`、`f32`、`i8`、`i16`、`i32`。
   - **不带 `tmp`** — `src` 必须位于 `loc=vec`，其他位置会被拒绝。
-  - **带 `tmp`** — `src` 可为 `vec`/`mat`/`acc`；A5 目标不允许打印 `mat` tile（仅 A2A3 支持）。
+  - **带 `tmp`** — `src` 可为 `vec`/`mat`/`acc`；Ascend 950PR&950DT系列产品 目标不允许打印 `mat` tile（仅 Atlas A2系列产品/Atlas A3系列产品 支持）。
 - **src 为全局视图（`pto.partition_tensor_view`）**
   - **不带 `tmp`** — 直接打印，无 `loc` 要求（视图类型不携带局部位置）。
   - **不允许携带 `tmp`** — verifier 检查 `expects tmp only when src is a tile_buf`；`src` 不是 `tile_buf` 时必须不写 `tmp`。

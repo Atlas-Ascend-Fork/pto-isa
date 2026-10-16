@@ -37,7 +37,7 @@ result = allocate_tile_buffer(valid_row?, valid_col?)
 
 **约束：**
 
-- **实现检查（A2A3/A5）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品/Ascend 950PR&950DT系列产品）**
   - 结果 tile_buf 必须具有 rank-2 的 validShape。
   - 当结果类型的 `v_row` 为动态（`?`）时，必须提供 `valid_row` 操作数；当 `v_row` 为静态时，不得提供。
   - 当结果类型的 `v_col` 为动态（`?`）时，必须提供 `valid_col` 操作数；当 `v_col` 为静态时，不得提供。

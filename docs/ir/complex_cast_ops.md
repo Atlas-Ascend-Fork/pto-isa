@@ -39,7 +39,7 @@ For each element (i, j):
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | `src` | `pto.tile_buf` | 源 tile buffer |
-| `tmp` | `pto.tile_buf`（可选） | 临时 scratch tile；仅 A2/A3 上 `satmode=OFF` 且为 `f32 -> i16`、`f16 -> i16`、`f16 -> i8` 转换时必须提供 |
+| `tmp` | `pto.tile_buf`（可选） | 临时 scratch tile；仅 Atlas A2系列产品/Atlas A3系列产品 上 `satmode=OFF` 且为 `f32 -> i16`、`f16 -> i16`、`f16 -> i8` 转换时必须提供 |
 | `dst` | `pto.tile_buf` | 目标 tile buffer，元素类型可不同于 `src` |
 
 **返回值：** 无。以 DPS 的形式写入 `dst`。
@@ -65,14 +65,14 @@ For each element (i, j):
   - `src` 和 `dst` 必须是兼容的 tile buffer。
   - `src` 与 `dst` 的逻辑范围和有效区域必须兼容。
 
-- **A2/A3 与 A5 低精度限制**
-  - A2/A3 不支持低精度 `tcvt` 操作数。
-  - A5 仅接受实现中列出的低精度转换对，例如 `f32 -> f8E4M3*`、`f32 -> f8E5M2*`、`f32 -> !pto.hif8`、`f16 -> !pto.hif8`、`bf16 <-> !pto.f4E1M2x2`、`bf16 <-> !pto.f4E2M1x2`、`f8E4M3* -> f32`、`f8E5M2* -> f32`、`!pto.hif8 -> f32`。
+- **Atlas A2系列产品/Atlas A3系列产品 与 Ascend 950PR&950DT系列产品 低精度限制**
+  - Atlas A2系列产品/Atlas A3系列产品 不支持低精度 `tcvt` 操作数。
+  - Ascend 950PR&950DT系列产品 仅接受实现中列出的低精度转换对，例如 `f32 -> f8E4M3*`、`f32 -> f8E5M2*`、`f32 -> !pto.hif8`、`f16 -> !pto.hif8`、`bf16 <-> !pto.f4E1M2x2`、`bf16 <-> !pto.f4E2M1x2`、`f8E4M3* -> f32`、`f8E5M2* -> f32`、`!pto.hif8 -> f32`。
   - 非低精度类型对沿用目标定义的转换行为。
 
 - **可选 tmp 操作数**
-  - `tmp` 为可选操作数；仅在 A2/A3 上、`satmode=OFF` 且转换对为 `f32 -> i16`、`f16 -> i16` 或 `f16 -> i8` 时才需要。
-  - 默认的 `satmode=ON` 不需要 `tmp`；A5 上的窄化转换也不需要 `tmp`。
+  - `tmp` 为可选操作数；仅在 Atlas A2系列产品/Atlas A3系列产品 上、`satmode=OFF` 且转换对为 `f32 -> i16`、`f16 -> i16` 或 `f16 -> i8` 时才需要。
+  - 默认的 `satmode=ON` 不需要 `tmp`；Ascend 950PR&950DT系列产品 上的窄化转换也不需要 `tmp`。
   - 省略 `tmp` 时，由实现自动补写临时空间。
 
 **硬件：**
@@ -127,11 +127,11 @@ For each element (i, j):
 
 **约束：**
 
-- **实现检查（A2A3/A5）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品/Ascend 950PR&950DT系列产品）**
   - src 必须为 `f32` 类型
   - 可选 `offset` 的元素类型必须为 `f32`
   - src 与 dst 的有效 shape 必须一致
-  - A2/A3: src 和 dst 必须使用 `blayout=row_major`
+  - Atlas A2系列产品/Atlas A3系列产品: src 和 dst 必须使用 `blayout=row_major`
 
 **示例：**
 
@@ -180,11 +180,11 @@ For each row i:
 
 **约束：**
 
-- **实现检查（A2A3/A5）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品/Ascend 950PR&950DT系列产品）**
   - `src` 元素类型必须为 8 位或 16 位整数
   - `scale`、`offset` 和 `dst` 的元素类型必须为 `f32`
   - `src`、`scale`、`offset` 和 `dst` 都必须是合法的 rank-2 `tile_buf`
-  - A2/A3 额外要求 `src`、`dst` 使用 row-major 布局；A5 无此附加布局限制
+  - Atlas A2系列产品/Atlas A3系列产品 额外要求 `src`、`dst` 使用 row-major 布局；Ascend 950PR&950DT系列产品 无此附加布局限制
 
 **示例：**
 

@@ -65,11 +65,11 @@ For each element (i, j):
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - tile 元素类型必须为以下之一：`i32`、`i16`、`f16` 或 `f32`。
   - tile 必须使用行优先布局（`blayout=row_major`）。
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - tile 元素类型必须为以下之一：`i32`、`f32`、`i16`、`f16`、`bf16` 或 `i8`。
   - tile 必须使用行优先布局（`blayout=row_major`）。
 
@@ -115,13 +115,13 @@ For each element (i, j):
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - `src0`、`src1` 和 `dst` 元素类型必须一致。
   - 共享元素类型必须为 `i8` 或 `i16`。
   - 三个 tile 必须使用行优先布局（`blayout=row_major`）。
   - `src0`、`src1` 必须分别与 `dst` 具有相同有效区域。
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - `src0`、`src1` 和 `dst` 元素类型必须一致。
   - 共享元素类型必须为 `i8`、`i16` 或 `i32`。
   - 三个 tile 必须使用行优先布局（`blayout=row_major`）。
@@ -169,13 +169,13 @@ For each element (i, j):
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - `src0`、`src1` 和 `dst` 元素类型必须一致。
   - 共享元素类型必须为 `i8` 或 `i16`。
   - 三个 tile 必须使用行优先布局（`blayout=row_major`）。
   - `src0`、`src1` 必须分别与 `dst` 具有相同有效区域。
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - `src0`、`src1` 和 `dst` 元素类型必须一致。
   - 共享元素类型必须为 `i8`、`i16` 或 `i32`。
   - 三个 tile 必须使用行优先布局（`blayout=row_major`）。
@@ -223,13 +223,13 @@ For each element (i, j):
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - tile 元素类型必须为 `i32`、`i16`、`f16` 或 `f32`。
   - tile 必须使用行优先布局（`blayout=row_major`）。
   - 有效区域必须在静态 tile 形状范围内。
   - `src0`、`src1` 和 `dst` 应具有相同的 `validRow/validCol`。
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - tile 元素类型必须为 `i32`、`i16`、`i8`、`f32` 或 `f16`。
   - tile 必须使用行优先布局（`blayout=row_major`）。
   - 有效区域必须在静态 tile 形状范围内。
@@ -277,13 +277,13 @@ For each element (i, j):
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - tile 元素类型必须为 `i32`、`i16`、`f16` 或 `f32`。
   - tile 必须使用 `loc=vec` 和行优先布局（`blayout=row_major`）。
   - 有效区域必须在静态 tile 形状范围内。
   - `src0`、`src1` 和 `dst` 应具有相同的 `validRow/validCol`。
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - tile 元素类型必须为 `i32`、`f32`、`i16` 或 `f16`。
   - tile 必须使用 `loc=vec` 和行优先布局（`blayout=row_major`）。
   - 有效区域必须在静态 tile 形状范围内。
@@ -331,13 +331,13 @@ For each element (i, j):
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - tile 元素类型必须为 `i32`、`i16`、`f16` 或 `f32`。
   - tile 必须使用行优先布局（`blayout=row_major`）。
   - 有效区域必须在静态 tile 形状范围内。
   - `src0`、`src1` 和 `dst` 应具有相同的 `validRow/validCol`。
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - tile 元素类型必须为 `i32`、`i16`、`i8`、`f32`、`f16` 或 `bf16`。
   - tile 必须使用行优先布局（`blayout=row_major`）。
   - 有效区域必须在静态 tile 形状范围内。
@@ -385,13 +385,13 @@ For each element (i, j):
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - tile 元素类型必须为 `i32`、`i16`、`f16` 或 `f32`。
   - tile 必须使用行优先布局（`blayout=row_major`）。
   - 有效区域必须在静态 tile 形状范围内。
   - `src0`、`src1` 和 `dst` 应具有相同的 `validRow/validCol`。
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - tile 元素类型必须为 `i32`、`i16`、`i8`、`f32` 或 `f16`。
   - tile 必须使用行优先布局（`blayout=row_major`）。
   - 有效区域必须在静态 tile 形状范围内。
@@ -449,13 +449,13 @@ For each element (i, j):
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - 输入元素类型必须为 `i32`、`f16` 或 `f32`。
   - 输出 mask 元素类型必须为 `i8`。
   - `src0`、`src1` 和 `dst` 必须使用 `loc=vec`。
   - 有效区域必须在静态 tile 形状范围内，且 `src0/src1/dst` 有效区域一致。
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - 输入元素类型必须为 `i32`、`i16`、`i8`、`f32`、`f16` 或 `bf16`。
 
 **示例：**
@@ -501,7 +501,7 @@ For each element (i, j):
 
 **约束：**
 
-- **实现检查（A2A3/A5）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品/Ascend 950PR&950DT系列产品）**
   - `src0` 和 `src1` 元素类型必须一致。
   - 共享元素类型必须为 `i8`、`i16` 或 `i32`。
   - `src0`、`src1` 和 `dst` 必须使用行优先布局（`blayout=row_major`）。
@@ -549,7 +549,7 @@ For each element (i, j):
 
 **约束：**
 
-- **实现检查（A2A3/A5）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品/Ascend 950PR&950DT系列产品）**
   - `src0` 和 `src1` 元素类型必须一致。
   - 共享元素类型必须为 `i8`、`i16` 或 `i32`。
   - `src0`、`src1` 和 `dst` 必须使用行优先布局（`blayout=row_major`）。
@@ -591,30 +591,30 @@ For each element (i, j):
 | ---- | ---- | ----------- |
 | `src0` | `pto.tile_buf` | 第一个源 tile buffer |
 | `src1` | `pto.tile_buf` | 第二个源 tile buffer |
-| `tmp` | `pto.tile_buf` | 临时 tile buffer；A5 中可复用占位 |
+| `tmp` | `pto.tile_buf` | 临时 tile buffer；Ascend 950PR&950DT系列产品 中可复用占位 |
 | `dst` | `pto.tile_buf` | 目标 tile buffer |
 
 **返回值：** 无。以 DPS 的形式写入 `dst`。
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - `src0`、`src1`、`tmp` 和 `dst` 元素类型必须一致。
   - 共享元素类型必须为 `i8` 或 `i16`。
   - 四个 tile 必须使用行优先布局（`blayout=row_major`）。
   - `src0`、`src1`、`tmp` 必须分别与 `dst` 具有相同有效区域。
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - `src0`、`src1` 和 `dst` 元素类型必须一致。
   - 共享元素类型必须为 `i8`、`i16` 或 `i32`。
   - `src0`、`src1` 和 `dst` 必须使用行优先布局（`blayout=row_major`）。
   - `src0`、`src1` 必须分别与 `dst` 具有相同有效区域。
-  - `tmp` 在 A5 路径中仅作为占位参数。
+  - `tmp` 在 Ascend 950PR&950DT系列产品 路径中仅作为占位参数。
 
 **示例：**
 
 ```mlir
-// A2/A3：需要独立的 tmp tile
+// Atlas A2系列产品/Atlas A3系列产品：需要独立的 tmp tile
 pto.txor ins(%src0, %src1, %tmp :
              !pto.tile_buf<loc=vec, dtype=i16, rows=16, cols=16,
              v_row=16, v_col=16, blayout=row_major, slayout=none_box,
@@ -629,7 +629,7 @@ pto.txor ins(%src0, %src1, %tmp :
              v_row=16, v_col=16, blayout=row_major, slayout=none_box,
              fractal=512, pad=0>)
 
-// A5：tmp 可复用 dst 作为占位
+// Ascend 950PR&950DT系列产品：tmp 可复用 dst 作为占位
 pto.txor ins(%src0, %src1, %dst :
              !pto.tile_buf<loc=vec, dtype=i32, rows=16, cols=16,
              v_row=16, v_col=16, blayout=row_major, slayout=none_box,
@@ -675,12 +675,12 @@ For each element (i, j):
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - `src0`、`src1` 和 `dst` 元素类型必须一致。
   - 共享元素类型必须为 `i16`、`i32`、`f16`、`bf16` 或 `f32`。
   - `src0`、`src1` 和 `dst` 必须使用行优先布局（`blayout=row_major`）。
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - `src0`、`src1` 和 `dst` 元素类型必须一致。
   - 共享元素类型必须为 `i8`、`i16`、`i32`、`f16`、`bf16` 或 `f32`。
   - `src0`、`src1` 和 `dst` 必须使用行优先布局（`blayout=row_major`）。
@@ -691,7 +691,7 @@ For each element (i, j):
 **示例：**
 
 ```mlir
-// 仅 A5 支持：tmp 使用 2 字节元素类型（f16）
+// 仅 Ascend 950PR&950DT系列产品 支持：tmp 使用 2 字节元素类型（f16）
 pto.tsel ins(%mask, %a, %b, %tmp :
              !pto.tile_buf<loc=vec, dtype=i8, rows=16, cols=32,
              v_row=16, v_col=16, blayout=row_major, slayout=none_box,
@@ -709,7 +709,7 @@ pto.tsel ins(%mask, %a, %b, %tmp :
              v_row=16, v_col=16, blayout=row_major, slayout=none_box,
              fractal=512, pad=0>)
 
-// A3 和 A5 均支持：tmp 使用 4 字节元素类型（f32）
+// Atlas A3系列产品 和 Ascend 950PR&950DT系列产品 均支持：tmp 使用 4 字节元素类型（f32）
 pto.tsel ins(%mask, %a, %b, %tmp :
              !pto.tile_buf<loc=vec, dtype=i8, rows=16, cols=32,
              v_row=16, v_col=16, blayout=row_major, slayout=none_box,
@@ -750,30 +750,30 @@ For each element (i, j):
 | ---- | ---- | ----------- |
 | `src0` | `pto.tile_buf` | 输入激活 tile buffer |
 | `src1` | `pto.tile_buf` | 逐元素负半轴斜率 tile buffer |
-| `tmp` | `pto.tile_buf` | 临时 tile buffer；A5 中可复用占位 |
+| `tmp` | `pto.tile_buf` | 临时 tile buffer；Ascend 950PR&950DT系列产品 中可复用占位 |
 | `dst` | `pto.tile_buf` | 目标 tile buffer |
 
 **返回值：** 无。以 DPS 的形式写入 `dst`。
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - `dst/src0/src1` 元素类型必须一致，且必须为 `f16` 或 `f32`。
   - `tmp` 元素类型使用 `ui8`。令 R/C 为目标有效行列数：临时空间物理行数至少 R+1，有效列数至少 `ceil(C/8)`，总容量至少 `(R+1)*align_up(ceil(C/8),32)` 字节。目标有效区域必须为静态尺寸。
   - 所有相关 tile 必须使用行优先布局（`blayout=row_major`）。
   - `src0`、`src1` 必须分别与 `dst` 具有相同有效区域。
-  - A3 中两个源 tile、目标 tile、临时空间不得内存重叠。
+  - Atlas A3系列产品 中两个源 tile、目标 tile、临时空间不得内存重叠。
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - `dst/src0/src1` 元素类型必须一致，且必须为 `f16` 或 `f32`。
   - 所有相关 tile 必须使用行优先布局（`blayout=row_major`）。
   - `src0`、`src1` 必须分别与 `dst` 具有相同有效区域。
-  - `tmp` 在 A5 路径中可作为占位参数。
+  - `tmp` 在 Ascend 950PR&950DT系列产品 路径中可作为占位参数。
 
 **示例：**
 
 ```mlir
-// A2/A3：需要独立的 tmp tile（元素类型为 ui8）
+// Atlas A2系列产品/Atlas A3系列产品：需要独立的 tmp tile（元素类型为 ui8）
 pto.tprelu ins(%a, %slopes, %tmp :
                !pto.tile_buf<loc=vec, dtype=f16, rows=16, cols=16,
                v_row=16, v_col=16, blayout=row_major, slayout=none_box,
@@ -789,10 +789,10 @@ pto.tprelu ins(%a, %slopes, %tmp :
                fractal=512, pad=0>)
 ```
 
-A5 使用目标 Tile 作为占位参数：
+Ascend 950PR&950DT系列产品 使用目标 Tile 作为占位参数：
 
 ```mlir
-// A5：tmp 可复用 dst 作为占位
+// Ascend 950PR&950DT系列产品：tmp 可复用 dst 作为占位
 pto.tprelu ins(%a, %slopes, %c :
                !pto.tile_buf<loc=vec, dtype=f16, rows=16, cols=16,
                v_row=16, v_col=16, blayout=row_major, slayout=none_box,

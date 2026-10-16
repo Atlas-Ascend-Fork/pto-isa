@@ -55,7 +55,7 @@ For each column j in the single valid row:
 
 **约束：**
 
-- **实现检查（A2A3/A5）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品/Ascend 950PR&950DT系列产品）**
   - `dst` 元素类型必须为整数类型，支持 16 位或 32 位整数，例如 `i16`、`ui16`、`i32`、`ui32`。
   - `S` 的类型必须与 `dst` 元素类型完全一致。
   - `dst` 使用 `loc=vec`，为 rank-2 的单行序列 Tile；有效行数为 1。
@@ -120,10 +120,10 @@ dst = philox_random(key0, key1, counter0..counter3, rounds)
 
 **约束：**
 
-- **实现检查（A2A3）**
-  - 不支持，仅 A5 可用。
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
+  - 不支持，仅 Ascend 950PR&950DT系列产品 可用。
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - 所有 key/counter 操作数必须为 `i32`/`ui32`。
   - `dst` 元素类型必须为 `i32` 或 `ui32`。
   - `dst` 必须使用 `blayout=row_major`。
@@ -183,12 +183,12 @@ For each element (i, j):
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - `dst` 元素类型必须为 `f16`、`f32`、`i16`、`i32`、`u16` 或 `u32`。
   - `dst` 必须使用 `loc=vec`。
   - `upperOrLower` 必须为 0 或 1。
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - `dst` 元素类型必须为 `f16`、`f32`、`bf16`、`i8`、`i16`、`i32`、`u8`、`u16` 或 `u32`。
   - `dst` 必须使用 `loc=vec`。
   - `upperOrLower` 必须为 0 或 1。

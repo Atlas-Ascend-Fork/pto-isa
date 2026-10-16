@@ -16,7 +16,7 @@
 - 目标累加器 tile 位于 `loc=acc`（L0C 缓冲区）
 - 形状约束：`lhs.rows == dst.rows`，`lhs.cols == rhs.rows`，`rhs.cols == dst.cols`
 - 所有操作在矩阵流水线（`PIPE_M`）上执行
-- **（A5）** 布局约束：`lhs.blayout=col_major, lhs.slayout=row_major`；`rhs.blayout=row_major, rhs.slayout=col_major`；`dst.blayout=col_major, dst.slayout=row_major`。A2A3 不在 IR 层面强制校验 `blayout`/`slayout`
+- **（Ascend 950PR&950DT系列产品）** 布局约束：`lhs.blayout=col_major, lhs.slayout=row_major`；`rhs.blayout=row_major, rhs.slayout=col_major`；`dst.blayout=col_major, dst.slayout=row_major`。Atlas A2系列产品/Atlas A3系列产品 不在 IR 层面强制校验 `blayout`/`slayout`
 
 ---
 
@@ -73,11 +73,11 @@ For each (i, j):
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - 支持的 `(dst 元素类型, lhs 元素类型, rhs 元素类型)` 组合：`(i32, i8, i8)`、`(f32, f16, f16)`、`(f32, f32, f32)`、`(f32, bf16, bf16)`。
   - 运行时约束：`m/k/n`（分别取自 `lhs valid row`、`lhs valid column`、`rhs valid column`）必须在 `[1, 4095]` 范围内。
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - `dst` 元素类型必须为 `i32` 或 `f32`。
   - 若 `dst` 为 `i32`，则 `lhs` 和 `rhs` 元素类型必须均为 `i8`。
   - 若 `dst` 为 `f32`，则 `lhs`/`rhs` 元素类型支持 `f16`、`bf16`、`f32`，以及部分 fp8 类型对（目标定义）。
@@ -135,7 +135,7 @@ For each (i, j):
 
 **约束：**
 
-- **实现检查（A2A3/A5）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品/Ascend 950PR&950DT系列产品）**
   - `lhs`、`rhs`、`dst` 的类型组合约束与 `pto.tmatmul` 相同。
   - `acc_in` 必须位于 `loc=acc`，其元素类型和形状与 `dst` 一致。
   - 运行时约束与 `pto.tmatmul` 相同。
@@ -195,13 +195,13 @@ For each (i, j):
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - `lhs`、`rhs`、`dst` 的类型组合约束与 `pto.tmatmul` 相同。
   - `bias` 元素类型必须与 `dst` 元素类型一致。
   - `bias` 必须使用 `loc=bias`，且 `rows=1`。
   - 运行时约束与 `pto.tmatmul` 相同。
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - `lhs`、`rhs`、`dst` 的类型组合约束与 `pto.tmatmul` 相同。
   - `bias` 元素类型必须与 `dst` 元素类型一致。
   - `bias` 必须使用 `loc=bias`、`rows=1` 和 `blayout=row_major`。
@@ -270,8 +270,8 @@ For each (i, j):
 
 **约束：**
 
-- **A2/A3 不支持此操作。**
-- **A5 约束**
+- **Atlas A2系列产品/Atlas A3系列产品 不支持此操作。**
+- **Ascend 950PR&950DT系列产品 约束**
   - `lhs`/`rhs` 必须位于 `left`/`right`，目标位于 `acc`，并满足本章的矩阵形状与布局约束；`dst` 元素类型为 `f32`。
   - 本节示例使用 `f8E4M3FN` 或 `f8E5M2` 的 FP8 类型对；以下尺寸关系分别使用数据类型中记录的物理与有效 extent。
   - 左数据物理列数与右数据物理行数必须为 64 的正整数倍；有效 `M/K/N` 必须在 `[1,4095]`。
@@ -280,7 +280,7 @@ For each (i, j):
 
 **示例：**
 
-A5 示例：有效区域等于物理尺寸，M=16、K=64、N=16；左 scale 为 `16x2`，右 scale 为 `2x16`。输入数据与缩放因子已准备在对应 Tile 中。
+Ascend 950PR&950DT系列产品 示例：有效区域等于物理尺寸，M=16、K=64、N=16；左 scale 为 `16x2`，右 scale 为 `2x16`。输入数据与缩放因子已准备在对应 Tile 中。
 
 ```mlir
 pto.tmatmul.mx ins(%a, %a_scale, %b, %b_scale :
@@ -346,14 +346,14 @@ For each (i, j):
 
 **约束：**
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - `lhs`、`rhs`、`lhs_scale`、`rhs_scale`、`dst` 的约束与 `pto.tmatmul.mx` 相同。
   - `acc_in` 必须位于 `loc=acc`，其元素类型和形状与 `dst` 一致。
   - 运行时约束与 `pto.tmatmul.mx` 相同。
 
 **示例：**
 
-A5 示例：有效区域等于物理尺寸，M=16、K=64、N=32；左 scale 为 `16x2`，右 scale 为 `2x32`。输入数据与缩放因子已准备在对应 Tile 中。
+Ascend 950PR&950DT系列产品 示例：有效区域等于物理尺寸，M=16、K=64、N=32；左 scale 为 `16x2`，右 scale 为 `2x32`。输入数据与缩放因子已准备在对应 Tile 中。
 
 ```mlir
 pto.tmatmul.mx.acc ins(%c_in, %a, %a_scale, %b, %b_scale :
@@ -414,7 +414,7 @@ For each (i, j):
 
 **约束：**
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - `lhs`、`rhs`、`lhs_scale`、`rhs_scale`、`dst` 的约束与 `pto.tmatmul.mx` 相同。
   - `bias` 元素类型必须为 `f32`。
   - `bias` 必须使用 `loc=bias`、`rows=1` 和 `blayout=row_major`。
@@ -422,7 +422,7 @@ For each (i, j):
 
 **示例：**
 
-A5 示例：有效区域等于物理尺寸，M=16、K=64、N=16；左 scale 为 `16x2`，右 scale 为 `2x16`。输入数据与缩放因子已准备在对应 Tile 中。
+Ascend 950PR&950DT系列产品 示例：有效区域等于物理尺寸，M=16、K=64、N=16；左 scale 为 `16x2`，右 scale 为 `2x16`。输入数据与缩放因子已准备在对应 Tile 中。
 
 ```mlir
 pto.tmatmul.mx.bias ins(%a, %a_scale, %b, %b_scale, %bias :
@@ -483,11 +483,11 @@ For each (i, j):
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - 支持的 `(dst 元素类型, lhs 元素类型, rhs 元素类型)` 组合：`(i32, i8, i8)`、`(f32, f16, f16)`、`(f32, f32, f32)`、`(f32, bf16, bf16)`。
   - 运行时约束：`m` 必须为 `1`；`k/n`（分别取自 `rhs valid row`、`rhs valid column`）必须在 `[1, 4095]` 范围内。
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - `dst` 元素类型必须为 `i32` 或 `f32`。
   - 若 `dst` 为 `i32`，则 `lhs` 和 `rhs` 元素类型必须均为 `i8`。
   - 若 `dst` 为 `f32`，则 `lhs`/`rhs` 元素类型支持 `f16`、`bf16`、`f32`，以及部分 fp8 类型对（目标定义）。
@@ -545,7 +545,7 @@ For each (i, j):
 
 **约束：**
 
-- **实现检查（A2A3/A5）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品/Ascend 950PR&950DT系列产品）**
   - `lhs`、`rhs`、`dst` 的类型组合约束与 `pto.tgemv` 相同。
   - `acc_in` 必须位于 `loc=acc`，其元素类型和形状与 `dst` 一致。
   - 运行时约束与 `pto.tgemv` 相同。
@@ -605,13 +605,13 @@ For each (i, j):
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - `lhs`、`rhs`、`dst` 的类型组合约束与 `pto.tgemv` 相同。
   - `bias` 元素类型必须与 `dst` 元素类型一致。
   - `bias` 必须使用 `loc=bias`，且 `rows=1`。
   - 运行时约束与 `pto.tgemv` 相同。
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - `lhs`、`rhs`、`dst` 的类型组合约束与 `pto.tgemv` 相同。
   - `bias` 元素类型必须与 `dst` 元素类型一致。
   - `bias` 必须使用 `loc=bias`、`rows=1` 和 `blayout=row_major`。
@@ -679,9 +679,9 @@ For each (i, j):
 
 **约束：**
 
-- **A2/A3 不支持此操作。**
-- **A5 约束**
-  - 数据与目标分别位于 `left`、`right`、`acc`，使用本章 A5 矩阵布局；`dst` 元素类型为 `f32`。
+- **Atlas A2系列产品/Atlas A3系列产品 不支持此操作。**
+- **Ascend 950PR&950DT系列产品 约束**
+  - 数据与目标分别位于 `left`、`right`、`acc`，使用本章 Ascend 950PR&950DT系列产品 矩阵布局；`dst` 元素类型为 `f32`。
   - 本节示例使用 `f8E4M3FN` 或 `f8E5M2` 的 FP8 类型对。
   - 有效 `M=1`，有效 `K/N` 在 `[1,4095]`；数据的物理尺寸满足矩阵乘法形状关系。
   - 两个 scale 均位于 `scaling`。令 `G=ceil(K/32)`，其中 K 为有效归约维：左 scale 的物理与有效尺寸均为 `[1,G]`；右 scale 的物理尺寸为 `[G,rhs.cols]`，有效尺寸为 `[G,N]`。
@@ -689,7 +689,7 @@ For each (i, j):
 
 **示例：**
 
-A5 示例：有效区域等于物理尺寸，M=1、K=128、N=16；左 scale 为 `1x4`，右 scale 为 `4x16`。输入数据与缩放因子已准备在对应 Tile 中。
+Ascend 950PR&950DT系列产品 示例：有效区域等于物理尺寸，M=1、K=128、N=16；左 scale 为 `1x4`，右 scale 为 `4x16`。输入数据与缩放因子已准备在对应 Tile 中。
 
 ```mlir
 pto.tgemv.mx ins(%a, %a_scale, %b, %b_scale :
@@ -755,16 +755,16 @@ For each (i, j):
 
 **约束：**
 
-- **A2A3 不支持此操作。**
+- **Atlas A2系列产品/Atlas A3系列产品 不支持此操作。**
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - `lhs`、`rhs`、`lhs_scale`、`rhs_scale`、`dst` 的约束与 `pto.tgemv.mx` 相同。
   - `acc_in` 必须位于 `loc=acc`，其元素类型和形状与 `dst` 一致。
   - 运行时约束与 `pto.tgemv.mx` 相同。
 
 **示例：**
 
-A5 示例：有效区域等于物理尺寸，M=1、K=128、N=16；左 scale 为 `1x4`，右 scale 为 `4x16`。输入数据与缩放因子已准备在对应 Tile 中。
+Ascend 950PR&950DT系列产品 示例：有效区域等于物理尺寸，M=1、K=128、N=16；左 scale 为 `1x4`，右 scale 为 `4x16`。输入数据与缩放因子已准备在对应 Tile 中。
 
 ```mlir
 pto.tgemv.mx.acc ins(%c_in, %a, %a_scale, %b, %b_scale :
@@ -825,9 +825,9 @@ For each (i, j):
 
 **约束：**
 
-- **A2A3 不支持此操作。**
+- **Atlas A2系列产品/Atlas A3系列产品 不支持此操作。**
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - `lhs`、`rhs`、`lhs_scale`、`rhs_scale`、`dst` 的约束与 `pto.tgemv.mx` 相同。
   - `bias` 元素类型必须为 `f32`。
   - `bias` 必须使用 `loc=bias`、`rows=1` 和 `blayout=row_major`。
@@ -835,7 +835,7 @@ For each (i, j):
 
 **示例：**
 
-A5 示例：有效区域等于物理尺寸，M=1、K=128、N=16；左 scale 为 `1x4`，右 scale 为 `4x16`。输入数据与缩放因子已准备在对应 Tile 中。
+Ascend 950PR&950DT系列产品 示例：有效区域等于物理尺寸，M=1、K=128、N=16；左 scale 为 `1x4`，右 scale 为 `4x16`。输入数据与缩放因子已准备在对应 Tile 中。
 
 ```mlir
 pto.tgemv.mx.bias ins(%a, %a_scale, %b, %b_scale, %bias :

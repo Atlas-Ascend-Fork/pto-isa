@@ -8,7 +8,7 @@
 - **异步预取**：使用 `pto.tprefetch_async` 启动 SDMA 驱动的异步预取，并返回同步事件
 - **本地缓冲区存储回全局内存**：通过 `pto.tstore` 将 tile buffer 写回全局内存分区，支持原子操作和量化转换
 - **带缩放因子的累加器存储**：通过 `pto.tstore` 的 `fp` 参数使用缩放 Tile 对累加器数据进行转换后存储到全局内存
-- **聚集/散射操作**：通过 `pto.mgather` 和 `pto.mscatter` 基于索引在全局内存与本地 Tile 之间进行非连续数据搬运，基础形式支持 A3/A5
+- **聚集/散射操作**：通过 `pto.mgather` 和 `pto.mscatter` 基于索引在全局内存与本地 Tile 之间进行非连续数据搬运，基础形式支持 Atlas A3系列产品/Ascend 950PR&950DT系列产品
 - **本地内存域间数据移动**：使用 `pto.tmov` 在 `mat`、`vec`、`acc`、`bias` 等本地存储域之间转移数据
 - **Tile 转置**：通过 `pto.ttrans` 对 tile buffer 进行矩阵转置
 - **标量读写**：通过 `pto.load` 和 `pto.store` 对指定指针地址空间中的元素进行读写
@@ -59,13 +59,13 @@ For each element (i, j) in tile valid region:
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - Tile 元素类型必须为以下之一：`i8`、`i16`、`i32`、`i64`、`f16`、`bf16`、`f32`。
   - `dst` 必须使用 `loc=vec` 或 `loc=mat`。
   - `dst` 和 `src` 的元素类型必须具有相同的位宽。
   - 运行时约束：所有源分区的 extent 必须为正；`dst` 的有效区域必须非负。
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - `src` 和 `dst` 元素类型必须为以下之一：`i8`、`i16`、`i32`、`i64`、`f16`、`bf16`、`f32`、`f8E4M3*`、`f8E5M2*`、`!pto.hif8`、`!pto.f4E1M2x2`、`!pto.f4E2M1x2`。
   - `dst` 元素大小必须为 1、2、4 或 8 字节，并与 `src` 匹配。
   - 对于 `i64` 类型，`dst` 的 padding 必须为 null 或零。
@@ -109,11 +109,11 @@ For each element (i, j) in tile valid region:
 
 **约束：**
 
-- **实现检查（A2A3/A5）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品/Ascend 950PR&950DT系列产品）**
   - `dst` 必须使用 `loc=vec` 或 `loc=mat`。
   - 静态源 extent 必须为正；`dst` 的有效 extent 必须非负。
   - `src` 和 `dst` 的元素类型必须具有相同的元素大小。
-  - 低精度类型（`f8*`、`!pto.hif8`、`!pto.f4*`）仅在 A5 上受支持。
+  - 低精度类型（`f8*`、`!pto.hif8`、`!pto.f4*`）仅在 Ascend 950PR&950DT系列产品 上受支持。
 
 **硬件管道：** PIPE_MTE2（GM 到本地 tile 的预取）
 
@@ -153,7 +153,7 @@ pto.tprefetch ins(%pv : !pto.partition_tensor_view<16x16xf16>)
 
 **约束：**
 
-- **实现检查（A2A3/A5）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品/Ascend 950PR&950DT系列产品）**
   - `src` 必须是扁平连续的逻辑 1D GM 视图。
   - `ctx` 必须是有效的 `prefetch_async_context`。
 
@@ -224,7 +224,7 @@ For each element (i, j) in tile valid region:
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - `src.loc` 必须为 `vec`、`mat` 或 `acc`。
   - 对于 `loc=vec` 或 `loc=mat`：不允许 `preQuantScalar`；`src` 元素类型必须为 `i8`、`i16`、`i32`、`i64`、`f16`、`bf16`、`f32`；位宽必须匹配。
   - 对于 `loc=acc`：`src` 必须为 `i32` 或 `f32`。
@@ -232,7 +232,7 @@ For each element (i, j) in tile valid region:
   - 带 `preQuantScalar` 时：`src=i32` → `dst=i8` 或 `f16`；`src=f32` → `dst=i8`。
   - 静态列数 `1 <= cols <= 4095`。
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - `src.loc` 必须为 `vec` 或 `acc`。
   - 对于 `loc=vec`：不允许 `preQuantScalar`；`src` 元素类型必须为 `i8`、`i16`、`i32`、`i64`、`f16`、`bf16`、`f32`、`f8*`、`!pto.hif8`、`!pto.f4*`。
   - 对于 `loc=acc`：`src` 必须为 `i32` 或 `f32`。
@@ -339,12 +339,12 @@ row 模式的索引单位为源行；elem 模式的索引单位为源元素，�
 **属性：**
 
 - `coalesce = #pto<coalesce row>`：按行读取；`#pto<coalesce elem>`：逐元素读取。
-- `gatherOob` 默认为 `#pto<gather_oob undefined>`，要求索引在有效范围内；A5 可显式选择 `clamp`（钳位）、`wrap`（环绕）或 `zero`（越界结果为零）。
+- `gatherOob` 默认为 `#pto<gather_oob undefined>`，要求索引在有效范围内；Ascend 950PR&950DT系列产品 可显式选择 `clamp`（钳位）、`wrap`（环绕）或 `zero`（越界结果为零）。
 
 **约束：**
 
-- A3/A5 均支持基础聚集形式；非默认越界模式仅用于 A5。
-- mem/dst 元素类型相同，支持 8/16/32 位整数、`f16`、`bf16`、`f32`；A5 额外支持 FP8 和 HiFloat8 类型。
+- Atlas A3系列产品/Ascend 950PR&950DT系列产品 均支持基础聚集形式；非默认越界模式仅用于 Ascend 950PR&950DT系列产品。
+- mem/dst 元素类型相同，支持 8/16/32 位整数、`f16`、`bf16`、`f32`；Ascend 950PR&950DT系列产品 额外支持 FP8 和 HiFloat8 类型。
 - 源 GM 分区在可推断布局时使用 ND。
 - GM→VEC：dst 为 `row_major/none_box`；idx 位于 `vec`，使用 `none_box`。row 模式的有效索引形状为 row_major 的 `[1,R]` 或 col_major 的 `[R,1]`，R 为目标有效行数；elem 模式与目标有效形状相同。不提供 scratch。
 - GM→L1：dst 位于 `mat`，使用 `col_major/row_major`、`fractal=512`；物理行数为 16 的倍数，物理列数为 `32/sizeof(dtype)` 的倍数。idx 是 GM 分区视图，不能用 VEC Tile；row 模式不提供 scratch，elem 模式必须提供连续且容量足够的 GM scratch。
@@ -353,7 +353,7 @@ row 模式的索引单位为源行；elem 模式的索引单位为源元素，�
 **示例：**
 
 ```mlir
-// A3/A5：从 1024 行表中聚集 32 行。
+// Atlas A3系列产品/Ascend 950PR&950DT系列产品：从 1024 行表中聚集 32 行。
 pto.mgather ins(%mem, %idx : !pto.partition_tensor_view<1024x32xi32>,
   !pto.tile_buf<loc=vec, dtype=i32, rows=1, cols=32,
     v_row=1, v_col=32, blayout=row_major, slayout=none_box,
@@ -365,7 +365,7 @@ pto.mgather ins(%mem, %idx : !pto.partition_tensor_view<1024x32xi32>,
 ```
 
 ```mlir
-// A5：相同的行聚集，越界行补零。
+// Ascend 950PR&950DT系列产品：相同的行聚集，越界行补零。
 pto.mgather ins(%mem, %idx : !pto.partition_tensor_view<1024x32xi32>,
   !pto.tile_buf<loc=vec, dtype=i32, rows=1, cols=32,
     v_row=1, v_col=32, blayout=row_major, slayout=none_box,
@@ -402,14 +402,14 @@ row 模式的索引单位为目标行，elem 模式为目标元素。未写入�
 **属性：**
 
 - `coalesce`：显式 `row` 或 `elem`。省略时仅支持从索引形状区分的基础形式：row_major 的 `[R,1]` 行索引，或与 src 有效形状相同的元素索引。建议显式写出模式。
-- `scatterAtomicOp`：默认 `#pto<scatter_atomic_op none>`，A5 可选择 `add`、`max`、`min`。add 支持 32 位整数、`f16`、`f32`；max/min 支持 32 位整数、`f32`。
-- `scatterOob`：默认 `#pto<scatter_oob undefined>`；A5 可选择 `skip`（跳过越界）、`clamp`（钳位）、`wrap`（环绕）。
+- `scatterAtomicOp`：默认 `#pto<scatter_atomic_op none>`，Ascend 950PR&950DT系列产品 可选择 `add`、`max`、`min`。add 支持 32 位整数、`f16`、`f32`；max/min 支持 32 位整数、`f32`。
+- `scatterOob`：默认 `#pto<scatter_oob undefined>`；Ascend 950PR&950DT系列产品 可选择 `skip`（跳过越界）、`clamp`（钳位）、`wrap`（环绕）。
 - 指定非默认 atomic/oob 或 scatterConflict 时，必须显式指定 coalesce；这些扩展不改变索引单位。
 
 **约束：**
 
-- A3/A5 均支持基础形式；非默认原子和越界模式仅用于 A5。
-- src/mem 元素类型相同，支持 8/16/32 位整数、`f16`、`bf16`、`f32`；A5 额外支持 FP8 和 HiFloat8。
+- Atlas A3系列产品/Ascend 950PR&950DT系列产品 均支持基础形式；非默认原子和越界模式仅用于 Ascend 950PR&950DT系列产品。
+- src/mem 元素类型相同，支持 8/16/32 位整数、`f16`、`bf16`、`f32`；Ascend 950PR&950DT系列产品 额外支持 FP8 和 HiFloat8。
 - src 使用 `row_major/none_box`；idx 使用 `none_box`；GM 视图在可推断时为 ND。
 - 显式 row 模式的有效索引形状为 row_major 的 `[1,R]` 或 col_major 的 `[R,1]`，R 为源有效行数；显式 elem 模式的索引有效形状与 src 相同。
 - 默认 undefined 模式不保护越界访问，调用者应提供有效范围内的索引。
@@ -417,7 +417,7 @@ row 模式的索引单位为目标行，elem 模式为目标元素。未写入�
 **示例：**
 
 ```mlir
-// A3/A5：将 32 行写到 GM 表中的指定行。
+// Atlas A3系列产品/Ascend 950PR&950DT系列产品：将 32 行写到 GM 表中的指定行。
 pto.mscatter ins(%src, %idx :
   !pto.tile_buf<loc=vec, dtype=i32, rows=32, cols=32,
     v_row=32, v_col=32, blayout=row_major, slayout=none_box,
@@ -430,7 +430,7 @@ pto.mscatter ins(%src, %idx :
 ```
 
 ```mlir
-// A5：原子累加并跳过越界行。
+// Ascend 950PR&950DT系列产品：原子累加并跳过越界行。
 pto.mscatter ins(%src, %idx :
   !pto.tile_buf<loc=vec, dtype=i32, rows=32, cols=32,
     v_row=32, v_col=32, blayout=row_major, slayout=none_box,
@@ -538,7 +538,7 @@ For each element (i, j):
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - 静态 shape 必须匹配。
   - 支持的位置对：`mat` → `left`/`right`/`bias`/`scaling`；`vec` → `vec`；`acc` → `mat`；`acc` → `vec`。
   - `accToVecMode` 仅用于 `acc` → `vec` 转换。
@@ -547,11 +547,11 @@ For each element (i, j):
   - `src.loc=acc` 且使用 `fp` 或 ReLU 时，源布局必须为 `blayout=col_major, slayout=row_major`。
   - `acc` → `mat` 的目标 `fractal` 必须为 `512`；带 `fp` 时目标布局也必须为 `blayout=col_major, slayout=row_major`。
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - 支持的位置对为：`mat` → `left`/`right`/`bias`/`scaling`；`vec` → `vec`/`mat`；`acc` → `vec`/`mat`。
   - `preQuantScalar`、`fp`、ReLU 与 `fp.loc=scaling` 的约束同上。
   - `src.loc=acc` 且使用 `fp` 或 ReLU 时，源布局必须为 `blayout=col_major, slayout=row_major`。
-  - A5 不要求 `acc` → `mat` 的目标 `fractal=512`。
+  - Ascend 950PR&950DT系列产品 不要求 `acc` → `mat` 的目标 `fractal=512`。
 
 **硬件管道：**
 
@@ -622,14 +622,14 @@ For each element (i, j):
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - `src` 和 `dst` 的元素类型必须匹配。
   - `src` 必须使用 `blayout=row_major`。
   - 元素大小必须为 1、2 或 4 字节。
   - 支持的类型：`i32`/`f32`（4 字节）、`i16`/`f16`/`bf16`（2 字节）、`i8`（1 字节）。
   - 转置在 `src` 的有效区域上进行。
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - `src` 和 `dst` 的元素大小必须匹配。
   - 主维度上需要 32 字节对齐。
   - `src` 和 `dst` 必须具有相同的元素类型。
@@ -662,7 +662,7 @@ pto.tmov ins(<src> : <src_type>, <fp> : <fp_type>)
 
 **语义：** 使用缩放 Tile fp 对累加器数据进行支持的精度转换，写入目标本地 Tile；不产生 SSA 返回值。
 
-**约束：** src 位于 acc，元素类型为 f32 或 32 位整数；fp 位于 scaling；fp 与 preQuantScalar 互斥。源使用 col_major/row_major 布局，目标路径与布局、转换类型及 ReLU 遵循 `tmov` 的约束。A3 的 acc→mat 目标 fractal 为 512，源与目标物理形状匹配；A5 不要求该目标 fractal 值。
+**约束：** src 位于 acc，元素类型为 f32 或 32 位整数；fp 位于 scaling；fp 与 preQuantScalar 互斥。源使用 col_major/row_major 布局，目标路径与布局、转换类型及 ReLU 遵循 `tmov` 的约束。Atlas A3系列产品 的 acc→mat 目标 fractal 为 512，源与目标物理形状匹配；Ascend 950PR&950DT系列产品 不要求该目标 fractal 值。
 
 **示例：**
 

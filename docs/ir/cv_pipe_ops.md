@@ -72,7 +72,7 @@ pto.aic_initialize_pipe {
 
 - `slot_num` — 可选，FIFO 深度（FIFO 中的条目数）。默认值：`dir_mask` 为 1 或 2 时为 8，为 3 时为 4。必须大于 0。
 
-- `local_slot_num` — 可选，仅限 A2/A3。本地 Tile 缓冲区的 FIFO 深度。必须大于 0 且不超过 `slot_num`。A5 上必须省略此属性。
+- `local_slot_num` — 可选，仅限 Atlas A2系列产品/Atlas A3系列产品。本地 Tile 缓冲区的 FIFO 深度。必须大于 0 且不超过 `slot_num`。Ascend 950PR&950DT系列产品 上必须省略此属性。
 
 - `nosplit` — 可选布尔属性。若为 `true`，禁用 Tile 分割，要求所有绑定的 `tpush`/`tpop`/`tfree` 操作的 `split` 属性为 0（`TILE_NO_SPLIT`）。
 
@@ -86,7 +86,7 @@ pto.aic_initialize_pipe {
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - 必须出现在 Cube 内核中（`pto.kernel_kind = #pto.kernel_kind<cube>`）。
   - `id` 必须在该内核中唯一。
   - `slot_num` 必须大于 0。
@@ -95,21 +95,21 @@ pto.aic_initialize_pipe {
   - `slot_size` 必须大于 0。
   - 若 `nosplit` 为 `true`，则所有使用此 `id` 的 `tpush`/`tpop`/`tfree` 操作的 `split` 属性必须为 0。
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - 必须出现在 Cube 内核中。
-  - `local_slot_num` 必须省略（A5 不支持）。
-  - 其他约束同 A2A3。
+  - `local_slot_num` 必须省略（Ascend 950PR&950DT系列产品 不支持）。
+  - 其他约束同 Atlas A2系列产品/Atlas A3系列产品。
 
 **示例：**
 
 ```mlir
-// A2/A3: 使用 GM 缓冲区和本地槽数配置的 C2V 初始化
+// Atlas A2系列产品/Atlas A3系列产品: 使用 GM 缓冲区和本地槽数配置的 C2V 初始化
 pto.aic_initialize_pipe {id = 0, dir_mask = 1, slot_size = 1024, slot_num = 2, local_slot_num = 1}
     (gm_slot_buffer = %gm_buf : !pto.ptr<f32>,
      c2v_consumer_buf = %c2v_import : i32,
      v2c_consumer_buf = %c0_i32 : i32)
 
-// A5: 无本地槽配置的 C2V 初始化
+// Ascend 950PR&950DT系列产品: 无本地槽配置的 C2V 初始化
 pto.aic_initialize_pipe {id = 0, dir_mask = 1, slot_size = 1024, nosplit = true}
     (c2v_consumer_buf = %c2v_import : i32,
      v2c_consumer_buf = %c0_i32 : i32)
@@ -137,24 +137,24 @@ pto.aiv_initialize_pipe {id = <id>, dir_mask = <dir>, slot_size = <size>,
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - 必须出现在 Vector 内核中（`pto.kernel_kind = #pto.kernel_kind<vector>`）。
   - 所有约束同 `pto.aic_initialize_pipe`。
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - 必须出现在 Vector 内核中。
   - `local_slot_num` 必须省略。
 
 **示例：**
 
 ```mlir
-// A2/A3: Vector 侧 C2V 消费者初始化
+// Atlas A2系列产品/Atlas A3系列产品: Vector 侧 C2V 消费者初始化
 pto.aiv_initialize_pipe {id = 0, dir_mask = 1, slot_size = 1024, slot_num = 2, local_slot_num = 1}
     (gm_slot_buffer = %gm_buf : !pto.ptr<f32>,
      c2v_consumer_buf = %c2v_import : i32,
      v2c_consumer_buf = %c0_i32 : i32)
 
-// A5: Vector 侧初始化
+// Ascend 950PR&950DT系列产品: Vector 侧初始化
 pto.aiv_initialize_pipe {id = 0, dir_mask = 1, slot_size = 1024, nosplit = true}
     (c2v_consumer_buf = %c2v_import : i32,
      v2c_consumer_buf = %c0_i32 : i32)
@@ -192,7 +192,7 @@ pto.tpush_to_aiv(<pipe_entry> : <pipe_entry_type>)
 
 **约束：**
 
-- **实现检查（A2A3/A5）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品/Ascend 950PR&950DT系列产品）**
   - 必须出现在 Cube 内核中。
   - `id` 必须匹配一个使用 `dir_mask=1` 或 `dir_mask=3` 的 `pto.aic_initialize_pipe` 操作。
   - 对于全局内存条目，操作必须为对应的 `pto.talloc_to_aiv` 所支配（必须在该分配之后）。
@@ -240,7 +240,7 @@ pto.tpush_to_aic(<pipe_entry> : <pipe_entry_type>)
 
 **约束：**
 
-- **实现检查（A2A3/A5）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品/Ascend 950PR&950DT系列产品）**
   - 必须出现在 Vector 内核中。
   - `id` 必须匹配一个使用 `dir_mask=2` 或 `dir_mask=3` 的 `pto.aiv_initialize_pipe` 操作。
   - 其他约束同 `pto.tpush_to_aiv`。
@@ -277,7 +277,7 @@ pto.tpush_to_aic(%tile : !pto.tile_buf<loc=vec, dtype=f32, rows=16, cols=16,
 
 **约束：**
 
-- **实现检查（A2A3/A5）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品/Ascend 950PR&950DT系列产品）**
   - 必须出现在 Vector 内核中。
   - `id` 必须匹配一个使用 `dir_mask=1` 或 `dir_mask=3` 的 `pto.aiv_initialize_pipe` 操作。
   - 返回类型必须与初始化配置兼容。
@@ -318,7 +318,7 @@ pto.tpush_to_aic(%tile : !pto.tile_buf<loc=vec, dtype=f32, rows=16, cols=16,
 
 **约束：**
 
-- **实现检查（A2A3/A5）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品/Ascend 950PR&950DT系列产品）**
   - 必须出现在 Cube 内核中。
   - `id` 必须匹配一个使用 `dir_mask=2` 或 `dir_mask=3` 的 `pto.aic_initialize_pipe` 操作。
 
@@ -363,7 +363,7 @@ pto.tfree_from_aic(<entry> : <pipe_entry_type>)
 
 **约束：**
 
-- **实现检查（A2A3/A5）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品/Ascend 950PR&950DT系列产品）**
   - 必须出现在 Vector 内核中。
   - `id` 必须匹配一个使用 `dir_mask=1` 或 `dir_mask=3` 的 `pto.aiv_initialize_pipe` 操作。
   - Tile buffer 释放使用无操作数形式；全局内存释放必须提供条目操作数。
@@ -411,7 +411,7 @@ pto.tfree_from_aiv(<entry> : <pipe_entry_type>)
 
 **约束：**
 
-- **实现检查（A2A3/A5）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品/Ascend 950PR&950DT系列产品）**
   - 必须出现在 Cube 内核中。
   - `id` 必须匹配一个使用 `dir_mask=2` 或 `dir_mask=3` 的 `pto.aic_initialize_pipe` 操作。
 
@@ -456,7 +456,7 @@ addr = reserve_local_buffer(name, size, location, autoAlloc)
 
 **约束：**
 
-- **实现检查（A2A3/A5）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品/Ascend 950PR&950DT系列产品）**
   - 必须嵌套在 `func.func` 内部。
   - `size` 必须大于 0。
   - `location` 必须为 `vec` 或 `mat`。
@@ -498,7 +498,7 @@ addr = import_peer_buffer(name, peer_func)
 
 **约束：**
 
-- **实现检查（A2A3/A5）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品/Ascend 950PR&950DT系列产品）**
   - 必须嵌套在 `func.func` 内部。
   - `peer_func` 引用的函数必须存在。
   - 对端函数中必须存在名称匹配的 `pto.reserve_buffer`。
@@ -682,7 +682,7 @@ func.func @vector_kernel(%gm_slot_buffer : !pto.ptr<f32>,
 
 ---
 
-### 本格 FIFO 形：`reserve_buffer` / `import_reserved_buffer`（仅 A5）
+### 本格 FIFO 形：`reserve_buffer` / `import_reserved_buffer`（仅 Ascend 950PR&950DT系列产品）
 
 以下示例展示生产侧用 `import_reserved_buffer` 绑定消费侧 `reserve_buffer` 预留的同名 FIFO：
 
@@ -753,7 +753,7 @@ pto.section.cube {
 
 **约束：**
 
-- **实现检查（A2A3/A5）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品/Ascend 950PR&950DT系列产品）**
   - 区域为单块、无终止符。
   - body 中的操作仅在 Cube 核（AIC）上下文中有效。
 
@@ -794,7 +794,7 @@ pto.section.vector {
 
 **约束：**
 
-- **实现检查（A2A3/A5）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品/Ascend 950PR&950DT系列产品）**
   - 区域为单块、无终止符。
   - body 中的操作仅在 Vector 核（AIV）上下文中有效。
 
@@ -849,7 +849,7 @@ pipe = init_l2g2l_pipe(dir_mask, slot_size, slot_num, gm_addr, ...)
 
 **约束：**
 
-- **实现检查（A2A3/A5）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品/Ascend 950PR&950DT系列产品）**
   - `slot_size` 和 `slot_num` 必须大于 0。
   - `gm_addr` 必须为合法的 GM 空间类型。
 
@@ -899,7 +899,7 @@ pipe = init_l2l_pipe(dir_mask, slot_size, slot_num, local_addr, ...)
 
 **约束：**
 
-- **实现检查（A2A3/A5）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品/Ascend 950PR&950DT系列产品）**
   - `slot_size` 和 `slot_num` 必须大于 0。
   - `local_addr` 必须为合法的本地空间类型。
 
@@ -937,7 +937,7 @@ entry = alloc_c2v_producer_slot(id, split)
 
 **约束：**
 
-- **实现检查（A2A3/A5）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品/Ascend 950PR&950DT系列产品）**
   - 必须位于 `pto.section.cube` 或 Cube kernel 函数内部。
   - 必须存在对应的 `pto.aic_initialize_pipe` 且 `dir_mask` 含 C2V 位。
 
@@ -974,7 +974,7 @@ entry = alloc_v2c_producer_slot(id, split)
 
 **约束：**
 
-- **实现检查（A2A3/A5）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品/Ascend 950PR&950DT系列产品）**
   - 必须位于 `pto.section.vector` 或 Vector kernel 函数内部。
   - 必须存在对应的 `pto.aiv_initialize_pipe` 且 `dir_mask` 含 V2C 位。
 

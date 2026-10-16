@@ -46,7 +46,7 @@ result = ptr + offset  // offset is in elements, not Bytes
 
 **约束：**
 
-- **实现检查（A2A3/A5）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品/Ascend 950PR&950DT系列产品）**
   - 结果类型必须与输入指针类型匹配。
   - 纯操作（无副作用）。
 
@@ -132,7 +132,7 @@ result = tensor_view(ptr, shape, strides, layout)
 
 **约束：**
 
-- **实现检查（A2A3/A5）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品/Ascend 950PR&950DT系列产品）**
   - `ptr` 必须为 `!pto.ptr<...>`，其元素类型与结果匹配。
   - `shape` 和 `strides` 操作数计数必须与张量视图秩匹配。
 
@@ -173,7 +173,7 @@ result = get_dim(tensor_view, dim_index)
 
 **约束：**
 
-- **实现检查（A2A3/A5）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品/Ascend 950PR&950DT系列产品）**
   - 纯操作（无副作用）。
 
 **示例：**
@@ -211,7 +211,7 @@ result = source[offsets : offsets + sizes]
 
 **约束：**
 
-- **实现检查（A2A3/A5）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品/Ascend 950PR&950DT系列产品）**
   - `offsets` 和 `sizes` 的计数必须与`source` 匹配。
   - 操作在 ODS 中正式声明 `Pure`，只创建逻辑视图，不读写底层数据。
 
@@ -256,7 +256,7 @@ result.valid = clip(explicit_valid_or_sizes, sizes)
 
 **约束：**
 
-- **实现检查（A2A3/A5）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品/Ascend 950PR&950DT系列产品）**
   - 对于 boxed 布局（`slayout != none_box`）：`sizes` 必须是内部 boxed 形状的倍数；`offsets` 当为常数时必须是内部 boxed 形状的倍数。
   - 对于 boxed 行主序：子视图保持完整源列范围，列偏移必须为 0。
   - 对于 boxed 列主序：子视图保持完整源行范围，行偏移必须为 0。
@@ -311,7 +311,7 @@ result = reinterpret_dtype(src)
 
 **约束：**
 
-- **实现检查（A2A3/A5）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品/Ascend 950PR&950DT系列产品）**
   - 源和结果必须具有不同的元素类型（如需仅改变 shape/config，使用 `pto.treshape`）。
   - 源和结果必须具有相同的 shape、validShape、memory space 和 tile config。
   - shape 必须为静态已知。
@@ -355,7 +355,7 @@ pto.get_validshape <source> : <source_type>
 
 **约束：**
 
-- **实现检查（A2A3/A5）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品/Ascend 950PR&950DT系列产品）**
   - 源必须为 rank-2 的 tile_buf。
   - 源的 validShape 必须为 rank-2。
 
@@ -396,7 +396,7 @@ source.valid_col = valid_col
 
 **约束：**
 
-- **实现检查（A2A3/A5）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品/Ascend 950PR&950DT系列产品）**
   - 源必须为 rank-2 的 tile_buf。
   - 源 tile_buf 的 valid_row 和 valid_col 必须均为动态（`?`）。
   - 源必须是本地绑定的 tile handle（如 `alloc_tile` 或由其派生的视图）；函数参数/返回值不受支持。
@@ -440,7 +440,7 @@ acquire_buffer_token(op_type, buf_id, mode)
 
 **约束：**
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - `op_type` 必须映射到具体管线（不能是 `PIPE_ALL` 或 `PIPE_UNASSIGNED`）。
   - `buf_id` 必须在 [0, 31] 范围内。
   - `mode` 必须为非负整数。
@@ -479,7 +479,7 @@ release_buffer_token(op_type, buf_id, mode)
 
 **约束：**
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - `op_type` 必须映射到具体管线（不能是 `PIPE_ALL` 或 `PIPE_UNASSIGNED`）。
   - `buf_id` 必须在 [0, 31] 范围内。
   - `mode` 必须为非负整数。
@@ -519,10 +519,10 @@ dst = scale_view_of(src)
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - 不支持此操作。
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - `src` 位于 `left` 或 `right`，`dst` 位于 `scaling`；物理和有效形状均为 rank-2。
   - 对 left 源，令 K 为源有效列数：目标物理形状为 `[src.rows,ceil(K/32)]`，有效形状为 `[src.v_row,ceil(K/32)]`。
   - 对 right 源，令 K 为源有效行数：目标物理形状为 `[ceil(K/32),src.cols]`，有效形状为 `[ceil(K/32),src.v_col]`。
@@ -531,7 +531,7 @@ dst = scale_view_of(src)
 **示例：**
 
 ```mlir
-// A5：绑定 f8 源到其相关的缩放 tile
+// Ascend 950PR&950DT系列产品：绑定 f8 源到其相关的缩放 tile
 pto.tget_scale_addr
     ins(%src : !pto.tile_buf<loc=left, dtype=f8E4M3FN, rows=1, cols=128,
                              v_row=1, v_col=128, blayout=col_major,

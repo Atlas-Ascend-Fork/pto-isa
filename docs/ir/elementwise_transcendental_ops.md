@@ -65,12 +65,12 @@ For each element (i, j):
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - tile 元素类型必须为 `f16` 或 `f32`。
   - `src0`、`src1` 和 `dst` 必须元素类型一致，并使用行优先布局（`blayout=row_major`）。
   - 有效区域必须在静态 tile 形状范围内，且三个 tile 有效区域一致。
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - tile 元素类型必须为 `i32`、`i16`、`f16` 或 `f32`。
   - `src0`、`src1` 和 `dst` 必须元素类型一致，并使用行优先布局（`blayout=row_major`）。
   - 有效区域必须在静态 tile 形状范围内，且三个 tile 有效区域一致。
@@ -185,7 +185,7 @@ For each element (i, j):
   - tile 必须使用 `loc=vec` 和行优先布局（`blayout=row_major`）。
   - 有效区域必须在静态 tile 形状范围内。
   - `src` 和 `dst` 必须具有相同的有效区域。
-  - A3 的 `TRECIP` 指令不支持源 tile 与目标 tile 使用同一段内存。
+  - Atlas A3系列产品 的 `TRECIP` 指令不支持源 tile 与目标 tile 使用同一段内存。
 
 - **除零行为**
   - 除零行为由目标实现定义；CPU simulator 的 debug 构建可能 assert。
@@ -422,10 +422,10 @@ For each element (i, j):
   - `src0`、`src1` 和 `dst` 必须具有相同有效区域。
   - `tmp` 至少提供 1 个有效行，且 `tmp.validCol >= dst.validCol`。
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - `src0/src1/dst` 元素类型必须为 `i32` 或 `f32`。
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - `src0/src1/dst` 元素类型必须为 `i32`、`i16`、`f16` 或 `f32`。
 
 **示例：**
@@ -479,7 +479,7 @@ For each element (i, j):
 
 **约束：**
 
-- **实现检查（A2A3/A5）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品/Ascend 950PR&950DT系列产品）**
   - `src0`、`src1` 和 `dst` 元素类型必须一致。
   - tile 元素类型必须为 `i32`、`i16`、`f16` 或 `f32`。
   - 三个 tile 必须满足二元 tile 操作的形状/有效区域一致性检查。

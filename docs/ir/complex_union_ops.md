@@ -51,12 +51,12 @@ For each element (i, j) in the valid region:
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - `dst`/`src0`/`src1` 元素类型必须一致，且为 `i32`、`i16`、`f16` 或 `f32` 之一。
   - 三个 tile 必须为 rank-2。
   - 要求至少一个输入的有效区域与 `dst` 的有效区域一致，另一个输入的有效区域不超过 `dst` 的有效区域。
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - `dst`/`src0`/`src1` 元素类型必须一致，且为 `i8`、`i16`、`i32`、`f16`、`bf16` 或 `f32` 之一。
   - 三个 tile 必须为 rank-2。
   - 仅支持特定的部分有效区域模式（例如一个源等于 `dst`，另一个源在 valid-rows 或 valid-cols 上小于 `dst`）。
@@ -107,12 +107,12 @@ For each element (i, j) in the valid region:
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - `dst`/`src0`/`src1` 元素类型必须一致，且为 `i32`、`i16`、`f16` 或 `f32` 之一。
   - 三个 tile 必须为 rank-2。
   - 要求至少一个输入的有效区域与 `dst` 的有效区域一致，另一个输入的有效区域不超过 `dst` 的有效区域。
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - `dst`/`src0`/`src1` 元素类型必须一致，且为 `i8`、`i16`、`i32`、`f16`、`bf16` 或 `f32` 之一。
   - 三个 tile 必须为 rank-2。
   - 要求 `src0` 和 `src1` 的有效区域在两个维度上均不超过 `dst` 的有效区域。
@@ -163,12 +163,12 @@ For each element (i, j) in the valid region:
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - `dst`/`src0`/`src1` 元素类型必须一致，且为 `i32`、`i16`、`f16` 或 `f32` 之一。
   - 三个 tile 必须为 rank-2，且 shape 一致。
   - 要求至少一个输入的有效区域与 `dst` 的有效区域一致，另一个输入的有效区域不超过 `dst` 的有效区域。
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - `dst`/`src0`/`src1` 元素类型必须一致，且为 `i8`、`i16`、`i32`、`f16`、`bf16` 或 `f32` 之一。
   - 三个 tile 必须为 rank-2，且 shape 一致。
   - 要求 `src0` 和 `src1` 的有效区域在两个维度上均不超过 `dst` 的有效区域。
@@ -219,12 +219,12 @@ For each element (i, j) in the valid region:
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - `dst`/`src0`/`src1` 元素类型必须一致，且为 `i32`、`i16`、`f16` 或 `f32` 之一。
   - 三个 tile 必须为 rank-2，且 shape 一致。
   - 要求至少一个输入的有效区域与 `dst` 的有效区域一致，另一个输入的有效区域不超过 `dst` 的有效区域。
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - `dst`/`src0`/`src1` 元素类型必须一致，且为 `i8`、`i16`、`i32`、`f16`、`bf16` 或 `f32` 之一。
   - 三个 tile 必须为 rank-2，且 shape 一致。
   - 要求 `src0` 和 `src1` 的有效区域在两个维度上均不超过 `dst` 的有效区域。
@@ -281,7 +281,7 @@ For each element (i, j):
 
 **约束：**
 
-- **实现检查（A2A3/A5）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品/Ascend 950PR&950DT系列产品）**
   - 所有值 tile（src0、src1、dst）的元素类型必须一致，为 `f16` 或 `f32`。
   - 所有索引 tile（src0Idx、src1Idx、dstIdx）的元素类型必须为 `ui32`。
   - 所有 tile 必须使用 `loc=vec`。
@@ -349,7 +349,7 @@ For each element (i, j):
 
 **约束：**
 
-- **实现检查（A2A3/A5）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品/Ascend 950PR&950DT系列产品）**
   - 所有值 tile（src0、src1、dst）的元素类型必须一致，为 `f16` 或 `f32`。
   - 所有索引 tile（src0Idx、src1Idx、dstIdx）的元素类型必须为 `ui32`。
   - 所有 tile 必须使用 `loc=vec`。

@@ -98,13 +98,13 @@ For each element (i, j):
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - tile 元素类型必须为 `i16`。
   - `src` 和 `dst` 元素类型必须一致。
   - tile 必须使用 `loc=vec` 和行优先布局（`blayout=row_major`）。
   - 有效区域必须在静态 tile 形状范围内，且 `src` 与 `dst` 有效区域一致。
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - tile 元素类型必须为 `i32`、`i16` 或 `i8`。
   - `src` 和 `dst` 元素类型必须一致。
   - tile 必须使用 `loc=vec` 和行优先布局（`blayout=row_major`）。
@@ -113,7 +113,7 @@ For each element (i, j):
 **示例：**
 
 ```mlir
-// 仅 A5 支持：i32 元素类型
+// 仅 Ascend 950PR&950DT系列产品 支持：i32 元素类型
 pto.tnot ins(%a : !pto.tile_buf<loc=vec, dtype=i32, rows=16, cols=16,
              v_row=16, v_col=16, blayout=row_major, slayout=none_box,
              fractal=512, pad=0>)
@@ -121,7 +121,7 @@ pto.tnot ins(%a : !pto.tile_buf<loc=vec, dtype=i32, rows=16, cols=16,
              v_row=16, v_col=16, blayout=row_major, slayout=none_box,
              fractal=512, pad=0>)
 
-// A3 和 A5 均支持：i16 元素类型
+// Atlas A3系列产品 和 Ascend 950PR&950DT系列产品 均支持：i16 元素类型
 pto.tnot ins(%a : !pto.tile_buf<loc=vec, dtype=i16, rows=16, cols=16,
              v_row=16, v_col=16, blayout=row_major, slayout=none_box,
              fractal=512, pad=0>)
@@ -157,7 +157,7 @@ For each element (i, j):
 
 **约束：**
 
-- **实现检查（A2A3/A5）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品/Ascend 950PR&950DT系列产品）**
   - tile 元素类型必须为 `f16`、`f32` 或 `i32`。
   - tile 必须使用 `loc=vec` 和行优先布局（`blayout=row_major`）。
   - 有效区域必须在静态 tile 形状范围内。
@@ -201,13 +201,13 @@ For each element (i, j):
 
 **约束：**
 
-- **实现检查（A2A3）**
+- **实现检查（Atlas A2系列产品/Atlas A3系列产品）**
   - tile 元素类型必须为 `i32`、`i16`、`f16` 或 `f32`。
   - tile 必须使用 `loc=vec`。
   - 有效区域必须在静态 tile 形状范围内。
   - `src` 和 `dst` 必须具有相同有效区域。
 
-- **实现检查（A5）**
+- **实现检查（Ascend 950PR&950DT系列产品）**
   - tile 元素类型必须为 `i8`、`i16`、`i32`、`f16`、`f32` 或 `bf16`。
   - tile 必须使用 `loc=vec`。
   - 有效区域必须在静态 tile 形状范围内。
