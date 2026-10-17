@@ -17,6 +17,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include "pto/common/memory.hpp"
 #include <pto/common/type.hpp>
 #include <pto/common/constants.hpp>
+#include <pto/common/arch_capability.hpp>
 #include "pto/common/debug.h"
 #if defined(__CPU_SIM)
 #include <pto/cpu/atomic.hpp>
@@ -1427,21 +1428,15 @@ struct Tile {
 public:
     using DType = Element_;
 
-    // Twin/packed dtypes (fp4x2) store 2 elements per byte on NPU as well:
-    // keeps the 32B-alignment static_assert consistent with __CPU_SIM (fp4
-    // Cols are nibble-counted -> Cols % 64 == 0 == 32B-aligned rows).
-    // IsTwinType lives in cpu/MXTypes.hpp (only available under __CPU_SIM),
-    // so the packed types are listed explicitly, as in GetNZC0Size.
-#ifdef __CPU_SIM
+    // fp4 twin types pack two nibbles per byte (32B row alignment needs
+    // Cols % 64 == 0). The fp4 names exist only on fp4-capable targets and
+    // must not be referenced elsewhere (fp4 is unsupported on A2A3/Kirin).
+#if defined(__CPU_SIM)
     static constexpr size_t kPackedElementsPerByte = IsTwinType<DType>() ? 2 : 1;
+#elif defined(PTO_NPU_ARCH_A5) || defined(PTO_NPU_ARCH_A6)
+    static constexpr size_t kPackedElementsPerByte = caps::IsFP4<DType>() ? 2 : 1;
 #else
-    static constexpr bool kIsPackedTwin = std::is_same_v<DType, float4_e2m1x2_t> ||
-                                          std::is_same_v<DType, float4_e1m2x2_t>
-#if defined(PTO_NPU_ARCH_A6)
-                                          || std::is_same_v<DType, hifloat4x2_t>
-#endif
-        ;
-    static constexpr size_t kPackedElementsPerByte = kIsPackedTwin ? 2 : 1;
+    static constexpr size_t kPackedElementsPerByte = 1;
 #endif
 
     static constexpr int getInnerRow()
