@@ -1,34 +1,36 @@
 # TMATMUL_MX
 
+<!-- md-trans-meta sourceCommit=unknown translatedAt=2026-10-30T05:15:50.951Z pushedAt=2026-11-02T03:00:52.195Z nl=2 -->
 
-## Tile Operation Diagram
+## Instruction Diagram
 
 ![TMATMUL_MX tile operation](../figures/isa/TMATMUL_MX.svg)
 
 ## Introduction
 
-Matrix multiply (GEMM) with additional scaling tiles for mixed-precision / quantized matmul on supported targets.
+Matrix multiplication (GEMM) with additional scale tiles, used to support mixed-precision/quantized matrix multiplication on the target.
 
-This instruction is currently implemented on A5 and A6 (see
+This instruction is currently implemented only on Ascend 950PR/Ascend 950DT and Ascend 960 (see
 `include/pto/npu/a5/TMatmul.hpp` and `include/pto/npu/a6/TMatmul.hpp`).
 
-## Math Interpretation
+## Mathematical Semantics
 
-Let:
+Assume:
 
 - `M = aMatrix.GetValidRow()`
 - `K = aMatrix.GetValidCol()`
 - `N = bMatrix.GetValidCol()`
 
-Conceptually, the result corresponds to a matrix multiply over the effective matmul domain (`0 <= i < M`, `0 <= j < N`), with the scaling tiles `aScaleMatrix` / `bScaleMatrix` configuring implementation-defined mixed-precision behavior:
+Conceptually, the result corresponds to matrix multiplication over the valid matrix multiplication domain (`0 <= i < M`, `0 <= j < N`), where the scale tiles `aScaleMatrix` / `bScaleMatrix` configure implementation-defined mixed-precision behavior:
 
 $$ \mathrm{C}_{i,j} = \sum_{k=0}^{K-1} \mathrm{A}_{i,k} \cdot \mathrm{B}_{k,j} $$
 
-The exact role of `aScaleMatrix` / `bScaleMatrix` (and any dequant/quant semantics) is target-defined.
+The exact role of `aScaleMatrix` / `bScaleMatrix` (as well as any dequantization/quantization semantics) is defined by the target.
 
-## C++ Intrinsic
+## C++ Built-in APIs
 
 Declared in `include/pto/common/pto_instr.hpp`:
+> The public include header is `<pto/pto-inst.hpp>`, and the internal declaration is located in `pto/common/pto_instr.hpp`.
 
 ```cpp
 template <typename TileRes, typename TileLeft, typename TileLeftScale, typename TileRight, typename TileRightScale,
@@ -58,18 +60,18 @@ PTO_INST RecordEvent TMATMUL_MX(TileRes &cMatrix, TileLeft &aMatrix, TileLeftSca
 
 ## Constraints
 
-- **Implementation checks (A5)**:
-    - `m/k/n` are taken from `aMatrix.GetValidRow()`, `aMatrix.GetValidCol()`, `bMatrix.GetValidCol()`.
-    - Static legality checks are enforced via `CheckMadMxValid<...>()` (types, shapes, fractals, and scaling tile legality).
-    - Supported `(C, A, B)` triples (`C` is always `float`; scale tiles are `float8_e8m0_t`):
+- **Implementation check (Ascend 950PR/Ascend 950DT)**:
+    - `m/k/n` are taken from `aMatrix.GetValidRow()`, `aMatrix.GetValidCol()`, and `bMatrix.GetValidCol()`.
+    - Static validity check is performed through `CheckMadMxValid<...>()` (type, shape, fractal, and scale tile validity).
+    - Supported `(C, A, B)` triplets (`C` is always `float`; the scale tile is `float8_e8m0_t`):
         - FP8: `(float, float8_e4m3_t, float8_e4m3_t)`, `(float, float8_e4m3_t, float8_e5m2_t)`, `(float, float8_e5m2_t, float8_e4m3_t)`, `(float, float8_e5m2_t, float8_e5m2_t)`.
         - FP4: `(float, float4_e1m2x2_t, float4_e1m2x2_t)`, `(float, float4_e1m2x2_t, float4_e2m1x2_t)`, `(float, float4_e2m1x2_t, float4_e2m1x2_t)`, `(float, float4_e2m1x2_t, float4_e1m2x2_t)`.
 - **Bias form**:
-    - `TileBias::DType` must be `float` and `TileBias::Loc == TileType::Bias` with `TileBias::Rows == 1` (A5 checks via `static_assert`).
+    - `TileBias::DType` must be `float` and `TileBias::Loc == TileType::Bias`, `TileBias::Rows == 1` (checked via `static_assert` on Ascend 950PR/Ascend 950DT).
 
 ## Examples
 
-### Auto
+### Automatic
 
 ```cpp
 #include <pto/pto-inst.hpp>

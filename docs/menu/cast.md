@@ -1,2 +1,2 @@
 # Data Type Conversion
-<!-- md-trans-meta sourceCommit=unknown translatedAt=2026-08-26T05:30:50.113Z pushedAt=2026-08-29T09:05:18.478Z -->
+<!-- md-trans-meta sourceCommit=unknown translatedAt=2026-10-30T06:21:05.786Z pushedAt=2026-11-02T03:00:52.248Z nl=1 -->

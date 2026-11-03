@@ -1,17 +1,18 @@
 # TCOLEXPANDDIV
 
+<!-- md-trans-meta sourceCommit=unknown translatedAt=2026-10-30T04:43:40.649Z pushedAt=2026-11-02T03:00:52.165Z nl=2 -->
 
-## Tile Operation Diagram
+## Instruction Diagram
 
 ![TCOLEXPANDDIV tile operation](../figures/isa/TCOLEXPANDDIV.svg)
 
 ## Introduction
 
-Column-wise broadcast divide: divide each element of `src0` by a per-column scalar vector `src1`.
+Column broadcast division: divides each column by a per-column scalar vector.
 
-## Math Interpretation
+## Mathematical Semantics
 
-Let `R = dst.GetValidRow()` and `C = dst.GetValidCol()`. Let `s_j` be the per-column scalar taken from `src1` (one value per column).
+Assume `R = dst.GetValidRow()` and `C = dst.GetValidCol()`. Assume that `s_j` is the per-column scalar obtained from `src1` (one value per column).
 
 For `0 <= i < R` and `0 <= j < C`:
 
@@ -19,9 +20,10 @@ $$
 \mathrm{dst}_{i,j} = \mathrm{src0}_{i,j} / s_j
 $$
 
-## C++ Intrinsic
+## C++ Built-in APIs
 
 Declared in `include/pto/common/pto_instr.hpp`:
+> The public include header is `<pto/pto-inst.hpp>`, and the internal declaration is located in `pto/common/pto_instr.hpp`.
 
 ```cpp
 template <typename TileDataDst, typename TileDataSrc0, typename TileDataSrc1, typename... WaitEvents>
@@ -30,17 +32,16 @@ PTO_INST RecordEvent TCOLEXPANDDIV(TileDataDst &dst, TileDataSrc0 &src0, TileDat
 
 ## Constraints
 
-- `TileDataDst::DType`, `TileDataSrc1::DType` must be one of: `half`, `float` for A2, A3 and A5, `int16`, `int32`, `uint16`, `uint32`, `bfloat16_t`, `int8`, `uint8`, `int64`, `uint64` for A5.
-- Tile shape/layout constraint (compile-time): `TileDataDst::isRowMajor`.
-- `src1` is expected to provide **one scalar per column** (i.e., its valid shape must cover `C` values).
-- Exact layout/fractal constraints are target-specific; see backend headers under `include/pto/npu/*/TColExpand*.hpp`.
+- `TileDataDst::DType` and `TileDataSrc1::DType` must be one of the following: `half`, `float` for Atlas A2 training products/Atlas A2 inference products, Atlas A3 training products/Atlas A3 inference products, and Ascend 950PR/Ascend 950DT; `int16`, `int32`, `uint16`, `uint32`, `bfloat16_t`, `int8`, `uint8`, `int64`, `uint64` for Ascend 950PR/Ascend 950DT.
+- Tile shape/layout constraint (compile time): `TileDataDst::isRowMajor`.
+- `src1` is expected to provide **one scalar per column** (that is, its effective shape must cover `C` values).
+- The exact layout/fractal constraints are destination-specific; see the backend header files under `include/pto/npu/*/TColExpand*.hpp`.
+### 64-Bit Element Types (Ascend 950PR/Ascend 950DT)
 
-### 64-bit element types (A5)
+`int64` / `uint64` are supported only on Ascend 950PR/Ascend 950DT. This architecture has no native 64-bit vector arithmetic unit, and the instruction emulates the operation through a pair of 32-bit registers (holding the low 32 bits and high 32 bits of each element, respectively); the per-column scalar operand is read using the same deinterleaved layout as the full-size operand.
 
-`int64` / `uint64` are supported on A5 only. A5 has no native 64-bit vector ALU, so the instruction is emulated on pairs of 32-bit registers that hold the low and the high word of every element; the per-column operand is read with the same de-interleaved layout as the full-sized operand.
-
-Division truncates toward zero, matching the 32-bit integer behavior; the division-by-zero behavior is target-defined. Tile alignment follows the usual rule for 64-bit elements: a RowMajor tile needs `Cols % 4 == 0`.
+Division rounds toward zero, consistent with the behavior of 32-bit integers; division-by-zero behavior is target-defined. Tile alignment follows the general rules for 64-bit elements: Row-Major tiles require `Cols % 4 == 0`.
 
 ## Examples
 
-See related examples in `docs/isa/` and `docs/coding/tutorials/`.
+See the relevant examples in `docs/isa/` and `docs/coding/tutorials/`.

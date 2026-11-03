@@ -1,19 +1,20 @@
 # TCOLARGMAX
 
-## Tile Operation Diagram
+<!-- md-trans-meta sourceCommit=unknown translatedAt=2026-10-30T04:38:26.444Z pushedAt=2026-11-02T03:00:52.162Z nl=2 -->
+
+## Instruction Diagram
 
 ![TCOLARGMAX tile operation](../figures/isa/TCOLARGMAX.svg)
 
 ## Introduction
 
-Get the row index of the maximum element for each column.
-A value+index variant is also available that returns both the maximum value and its row index.
+Obtains the row index corresponding to the maximum value in each column. It also provides a value+index mode that returns both the maximum value and its row index for each column.
 
-## Math Interpretation
+## Mathematical Semantics
 
-### Pure Index Mode
+### Index-Only Mode
 
-Let `R = src.GetValidRow()` and `C = src.GetValidCol()`. For `0 <= j < C`:
+Assume `R = src.GetValidRow()` and `C = src.GetValidCol()`. For `0 <= j < C`:
 
 $$ \mathrm{dstIdx}_{0,j} = \underset{0 \le i < R}{\operatorname{argmax}} \; \mathrm{src}_{i,j} $$
 
@@ -23,18 +24,19 @@ $$ \mathrm{dstVal}_{0,j} = \max_{0 \le i < R} \mathrm{src}_{i,j} $$
 
 $$ \mathrm{dstIdx}_{0,j} = \underset{0 \le i < R}{\operatorname{argmax}} \; \mathrm{src}_{i,j} $$
 
-## C++ Intrinsic
+## C++ Built-in APIs
 
 Declared in `include/pto/common/pto_instr.hpp`:
+> The public include header is `<pto/pto-inst.hpp>`, and the internal declaration is located in `pto/common/pto_instr.hpp`.
 
-### Pure Index Mode (3-argument)
+### Index-Only Mode (3 Parameters)
 
 ```cpp
 template <typename TileDataOut, typename TileDataIn, typename TileDataTmp, typename... WaitEvents>
 PTO_INST RecordEvent TCOLARGMAX(TileDataOut &dst, TileDataIn &src, TileDataTmp &tmp, WaitEvents &...events)
 ```
 
-### Value + Index Mode (4-argument)
+### Value + Index Mode (4 Parameters)
 
 ```cpp
 template <typename TileDataOutVal, typename TileDataOutIdx, typename TileDataIn, typename TileDataTmp,
@@ -45,45 +47,45 @@ PTO_INST RecordEvent TCOLARGMAX(TileDataOutVal& dstVal, TileDataOutIdx& dstIdx, 
 
 ## Constraints
 
-### General constraints / checks
+### General Constraints or Checks
 
 - `dstIdx` and `src` must be `TileType::Vec`.
-- `src` may use ND or DN non-fractal layout (`SLayout::NoneBox`). `BLayout` may be `RowMajor` (orthogonal to `SLayout::NoneBox`; when `SLayout` is omitted in examples it defaults to `SLayout::NoneBox`).
-- `dstIdx` must use standard ND layout: row-major and non-fractal (`BLayout::RowMajor`, `SLayout::NoneBox`).
-- Supported destination index element types: `uint32_t`, `int32_t`.
+- `src` can use a non-fractal layout of ND or DN (`SLayout::NoneBox`). `BLayout` can be `RowMajor` (orthogonal to `SLayout::NoneBox`; when `SLayout` is omitted in the example, it defaults to `SLayout::NoneBox`).
+- `dstIdx` must use a standard ND layout: row-major and non-fractal (`BLayout::RowMajor`, `SLayout::NoneBox`).
+- Supported index destination element types: `uint16_t`, `int16_t`, `uint32_t`, `int32_t` (depending on the source element size).
 - Runtime checks:
     - `src.GetValidRow() != 0`
     - `src.GetValidCol() != 0`
     - `dstIdx.GetValidRow() == 1`
     - `src.GetValidCol() == dstIdx.GetValidCol()`
 
-### CPU_SIM implementation checks
+### CPU_SIM Implementation Check
 
-- Supported source element types are integral types, `half`, `bfloat16_t`, and `float`.
-- The destination index element type must be `int32_t` or `uint32_t`.
-- In value + index mode, the value destination element type must match the source element type.
-- `tmp` is accepted for interface compatibility but is not used by the CPU implementation.
+- The supported source element types are integer types, `half`, `bfloat16_t`, and `float`.
+- The index destination element type must be `int32_t` or `uint32_t`.
+- In value+index mode, the value destination element type must be consistent with the source element type.
+- The interface retains `tmp` for compatibility, and the CPU implementation does not use this temporary Tile.
 
-### Pure Index Mode (3-argument)
+### Index-Only Mode (3 Parameters)
 
-#### A2A3 implementation checks
+#### Implementation Check for Atlas A2/A3 Training Products/Atlas A2/A3 Inference Products
 
 - Supported source element types: `half`, `float`, `uint16_t`, `uint32_t`.
-- `tmp` must use the same element type as `src`.
-- `tmp` is used as scratch storage for index tracking and current comparison values.
+- The element type of `tmp` must match that of `src`.
+- `tmp` is used as temporary storage for index tracking and the current comparison value.
 
-#### A5 implementation checks
+#### Ascend 950PR/Ascend 950DT Implementation Check
 
-- Supported source element sizes are 8-bit, 16-bit, or 32-bit; covers `int8_t`, `uint8_t`, `int16_t`, `uint16_t`, `int32_t`, `uint32_t`, `half`, `float`.
-- `tmp` is accepted by the interface but not used by the implementation.
+- The supported source element width is 8-bit, 16-bit, or 32-bit, covering `int8_t`, `uint8_t`, `int16_t`, `uint16_t`, `int32_t`, `uint32_t`, `half`, and `float`.
+- The API receives `tmp`, but the implementation does not actually use it.
 
-### Value + Index Mode (4-argument)
+### Value + Index Mode (4 Parameters)
 
 In addition to the general constraints:
 
-- `dstVal` must be `TileType::Vec` with standard ND layout (row-major, non-fractal).
-- `dstVal` element type must match the source element type `TileDataIn::DType`.
-- 8-bit source types are **not** supported.
+- `dstVal` must be `TileType::Vec`, using the standard ND layout (row-major, non-fractal).
+- The `dstVal` element type must match the source element type `TileDataIn::DType`.
+- 8-bit source types are **not supported**.
 - Runtime checks:
     - `dstVal.GetValidRow() == 1`
     - `dstVal.GetValidCol() != 0`
@@ -91,61 +93,61 @@ In addition to the general constraints:
     - `dstVal.GetValidRow() == dstIdx.GetValidRow()`
     - `dstVal.GetValidCol() == dstIdx.GetValidCol()`
 
-#### A2A3 implementation checks
+#### Implementation Check for Atlas A2/A3 Training Products/Atlas A2/A3 Inference Products
 
 - Supported source element types: `half`, `float`, `uint16_t`, `uint32_t`.
-- When source element size is 2 bytes (`half`, `uint16_t`): `dstIdx` element type must be `uint16_t` or `int16_t`.
-- When source element size is 4 bytes (`float`, `uint32_t`): `dstIdx` element type must be `uint32_t` or `int32_t`.
-- `tmp` must use the same element type as `src`.
-- `tmp` is used as scratch storage; for half input types an internal s16->f16->s32 conversion path is used for the index.
+- When the source element size is 2 bytes (`half`, `uint16_t`): the `dstIdx` element type must be `uint16_t` or `int16_t`.
+- When the source element size is 4 bytes (`float`, `uint32_t`): the `dstIdx` element type must be `uint32_t` or `int32_t`.
+- The element type of `tmp` must match that of `src`.
+- `tmp` is used as temporary storage; for the half input type, the s16->f16->s32 conversion path is performed internally.
 
-#### A5 implementation checks
+#### Ascend 950PR/Ascend 950DT Implementation Check
 
-- Source element size must be 16-bit or 32-bit (`sizeof(T) != 1`).
-- When source element size is 2 bytes (`half`, `int16_t`, `uint16_t`): `dstIdx` element type must be `uint16_t` or `int16_t`.
-- When source element size is 4 bytes (`float`, `int32_t`, `uint32_t`): `dstIdx` element type must be `uint32_t` or `int32_t`.
-- `tmp` is accepted by the interface but not used by the implementation.
+- The source element size must be 16-bit or 32-bit (`sizeof(T) != 1`).
+- When the source element size is 2 bytes (`half`, `int16_t`, `uint16_t`): the `dstIdx` element type must be `uint16_t` or `int16_t`.
+- When the source element size is 4 bytes (`float`, `int32_t`, `uint32_t`): the `dstIdx` element type must be `uint32_t` or `int32_t`.
+- The API receives `tmp`, but the implementation does not actually use it.
 
-### About temporary tile `tmp` for A2A3
+### `tmp` Tile Description for Atlas A2/A3 Training Products/Atlas A2/A3 Inference Products
 
-* `tmp` **is always used** in the A2A3 implementation, but the extent of usage depends on the source element type and mode:
+- In the implementation of Atlas A2/A3 training products/Atlas A2/A3 inference products, `tmp` is **always used**, but the extent of usage depends on the source element type and mode:
 
-  | Source type | Mode | Region 0 (row index) | Region 1 (comparison values) | Region 2 (argmax index) |
+  | Source Type | Mode | Region 0 (Row Index) | Region 1 (Comparison Value) | Region 2 (Argmax Index) |
   |---|---|---|---|---|
-  | `half` | Pure Index | `tmp` | `tmp` | `tmp` |
-  | `half` | Value + Index | `tmp` | `tmp` | `dstIdx` |
-  | `float` | Pure Index | `tmp` | `dstIdx` | `dstIdx` |
-  | `float` | Value + Index | `tmp` | `dstIdx` | `dstIdx` |
+  | `half` | Pure index | `tmp` | `tmp` | `tmp` |
+  | `half` | Value+index | `tmp` | `tmp` | `dstIdx` |
+  | `float` | Pure index | `tmp` | `dstIdx` | `dstIdx` |
+  | `float` | Value+index | `tmp` | `dstIdx` | `dstIdx` |
 
-* `tmp` tile's data type must be the same as `src`'s data type.
-* `tmp` tile is organized into up to three regions within a single row:
-  - Region 0 (`[0, tmpGapEles)`): current row index counter (incremented per row). Always stored in `tmp`.
-  - Region 1 (`[tmpGapEles, 2 * tmpGapEles)`): current maximum elements for comparison. Stored in `tmp` for `half` type; stored in `dstIdx` for `float` type.
-  - Region 2 (`[2 * tmpGapEles, 3 * tmpGapEles)`): argmax index result. Stored in `tmp` only for `half` + Pure Index mode; stored in `dstIdx` otherwise.
-* `tmpGapEles` is determined as follows:
+- The data type of the `tmp` tile must be consistent with that of `src`.
+- The `tmp` tile is divided into up to three regions within a single row:
+  - Region 0 (`[0, tmpGapEles)`): current row index counter (incremented per row). It is always stored in `tmp`.
+  - Region 1 (`[tmpGapEles, 2 * tmpGapEles)`): current maximum element, used for comparison. For the `half` type, it is stored in `tmp`; for the `float` type, it is stored in `dstIdx`.
+  - Region 2 (`[2 * tmpGapEles, 3 * tmpGapEles)`): argmax index result. It is stored in `tmp` only in the `half` + index-only mode; in other cases, it is stored in `dstIdx`.
+- Determination of `tmpGapEles`:
   - When `srcValidCol >= elemPerRpt`: `tmpGapEles = elemPerRpt`.
   - When `srcValidCol < elemPerRpt`: `tmpGapEles = ceil(srcValidCol / elemPerBlock) * elemPerBlock`.
-* For `half` + Pure Index mode (maximum `tmp` usage), simply set `tmp` tile size the same as `src` when `src` is small, or calculate the required `tmp` stride using:
+- For `half` + index-only mode (the case with the largest `tmp` usage), when `src` is small, you can directly set the `tmp` tile size to be the same as `src`; you can also calculate the required stride of the `tmp` tile using the following formula:
 
   ```text
   repeats = ceil(validCol / elementPerRepeat)
   stride = ceil(repeats * 2 / elementPerBlock) * elementPerBlock + ceil(repeats / elementPerBlock) * elementPerBlock
   ```
 
-  For other type/mode combinations, only Region 0 is required in `tmp`, so `tmp` stride of `tmpGapEles` suffices.
+  For other type/mode combinations, only region 0 is required in `tmp`, so the `tmp` stride only needs to be `tmpGapEles`.
 
-* In Pure Index mode with `half` input, `tmp` region 2 data undergoes s16->f16->s32 conversion before being stored to `dstIdx`.
+- In index-only mode, if the input is of the `half` type, the data in region 2 of `tmp` undergoes s16->f16->s32 conversion before being written to `dstIdx`.
 
-### About temporary tile `tmp` for A5
+### Ascend 950PR/Ascend 950DT `tmp` Tile Description
 
-* `tmp` temporary tile is **not used** in the A5 implementation for either mode. The A5 uses vector register-based computation (`__VEC_SCOPE__`) and does not require scratch tile storage.
-* `tmp` is retained in the C++ intrinsic signature solely for API compatibility with A2A3.
+- In the Ascend 950PR/Ascend 950DT implementation, the `tmp` tile **is not used in either mode**. Ascend 950PR/Ascend 950DT uses a vector-register-based computation approach (`__VEC_SCOPE__`) and does not require temporary tile storage.
+- `tmp` is retained in the C++ built-in API signature only for API compatibility with Atlas A2/A3 training products/Atlas A2/A3 inference products.
 
 ## Examples
 
-### Pure Index Mode
+### Index-Only Mode
 
-#### Auto
+#### Automatic
 
 ```cpp
 #include <pto/pto-inst.hpp>
@@ -186,7 +188,7 @@ void example_manual() {
 
 ### Value + Index Mode
 
-#### Auto
+#### Automatic
 
 ```cpp
 #include <pto/pto-inst.hpp>

@@ -1,23 +1,25 @@
 # TROWPROD
 
+<!-- md-trans-meta sourceCommit=unknown translatedAt=2026-10-30T05:57:16.650Z pushedAt=2026-11-02T03:00:52.229Z nl=2 -->
 
-## Tile Operation Diagram
+## Instruction Diagram
 
 ![TROWPROD tile operation](../figures/isa/TROWPROD.svg)
 
 ## Introduction
 
-Reduce each row by multiplying across columns.
+Performs product reduction on each row of elements.
 
-## Math Interpretation
+## Mathematical Semantics
 
-Let `R = src.GetValidRow()` and `C = src.GetValidCol()`. For `0 <= i < R`:
+Assume `R = src.GetValidRow()` and `C = src.GetValidCol()`. For `0 <= i < R`:
 
 $$ \mathrm{dst}_{i,0} = \prod_{j=0}^{C-1} \mathrm{src}_{i,j} $$
 
-## C++ Intrinsic
+## C++ Built-in APIs
 
 Declared in `include/pto/common/pto_instr.hpp`:
+> The public include header is `<pto/pto-inst.hpp>`, and the internal declaration is located in `pto/common/pto_instr.hpp`.
 
 ```cpp
 template <typename TileDataOut, typename TileDataIn, typename TileDataTmp, typename... WaitEvents>
@@ -26,47 +28,47 @@ PTO_INST RecordEvent TROWPROD(TileDataOut &dst, TileDataIn &src, TileDataTmp &tm
 
 ## Constraints
 
-### General constraints / checks
+### General Constraints or Checks
 
 - `dst` and `src` must both be `TileType::Vec`.
-- `src` must use standard ND layout: row-major and non-fractal (`BLayout::RowMajor`, `SLayout::NoneBox`).
-- `dst` must use one of the following non-fractal layouts:
+- `src` must use the standard ND layout: row-major and non-fractal (`BLayout::RowMajor`, `SLayout::NoneBox`).
+- `dst` must use one of the following two non-fractal layouts:
     - ND layout (`BLayout::RowMajor`, `SLayout::NoneBox`), or
-    - DN layout with exactly one column (`BLayout::ColMajor`, `SLayout::NoneBox`, `Cols == 1`).
-- `dst` and `src` must use the same element type.
-- Runtime valid-region checks:
+    - DN layout with the number of columns strictly equal to 1 (`BLayout::ColMajor`, `SLayout::NoneBox`, `Cols == 1`).
+- The element types of `dst` and `src` must be consistent.
+- Runtime valid region checks:
     - `src.GetValidRow() != 0`
     - `src.GetValidCol() != 0`
     - `src.GetValidRow() == dst.GetValidRow()`
-- The intrinsic signature requires an explicit `tmp` operand.
+- The built-in API signature requires explicitly passing the `tmp` operand.
 
-### A2A3 implementation checks
-
-- Supported element types: `half`, `float`, `int32_t`, `int16_t`.
-
-### A5 implementation checks
+### Implementation Check for Atlas A2/A3 Training Products/Atlas A2/A3 Inference Products
 
 - Supported element types: `half`, `float`, `int32_t`, `int16_t`.
-- In the currently inspected implementation path, the enforced constraints are on `src` and `dst`.
-- No extra shape/layout assertions on `tmp` are enforced in the current implementation path.
+
+### Ascend 950PR/Ascend 950DT Implementation Check
+
+- Supported element types: `half`, `float`, `int32_t`, `int16_t`.
+- In the currently checked implementation path, the actual constraints apply to `src` and `dst`.
+- In the current implementation path, there is no additional requirement that `tmp` must satisfy specific shape/layout constraints.
 
 ## Temporary Space
 
-### A2A3
+### Atlas A2/A3 Training Products/Atlas A2/A3 Inference Products
 
-`tmp` **is used** as a per-row accumulator buffer. For each row, the implementation initializes `tmp` with `1.0` and then multiplies blocks of `src` data into `tmp` using `vmul`. After all blocks are accumulated, the scalar-mode pipeline reads `tmp` elements and computes the final product.
+`tmp` **is used** as a row-wise accumulator buffer. For each row, the implementation initializes `tmp` to `1.0`, and then uses `vmul` to multiply each block of the `src` data into `tmp`. After all blocks are accumulated, the scalar-mode pipe reads the `tmp` elements and computes the final product.
 
 - `tmp` must have the same element type as `src`/`dst`.
 - `tmp` size: at least 1 row and `CeilDivision(TileDataIn::Cols / 2, REPEAT_BYTE_SIZE / sizeof(T))` columns.
-- A safe default: set `tmp` to the same shape as `src`.
+- Safe default settings: set `tmp` to the same shape as `src`.
 
-### A5
+### Ascend 950PR/Ascend 950DT
 
-`tmp` is accepted by the interface but **not used** by the A5 implementation. The A5 backend uses vector register-based reduction (`vmul` + `vintlv` for tree reduction) and does not require scratch tile storage. `tmp` is retained in the C++ intrinsic signature solely for API compatibility with A2A3.
+`tmp` is accepted by the API but **not used** by the Ascend 950PR/Ascend 950DT implementation. The Ascend 950PR/Ascend 950DT backend uses vector-register-based reduction (`vmul` + `vintlv` for tree reduction) and does not require temporary tile storage. `tmp` is retained in the C++ built-in API signature only for API compatibility with Atlas A2/A3 training products/Atlas A2/A3 inference products.
 
 ## Examples
 
-### Auto
+### Automatic Mode
 
 ```cpp
 #include <pto/pto-inst.hpp>
@@ -84,7 +86,7 @@ void example_auto() {
 }
 ```
 
-### Manual
+### Manual Mode
 
 ```cpp
 #include <pto/pto-inst.hpp>

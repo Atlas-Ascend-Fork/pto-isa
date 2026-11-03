@@ -1,34 +1,35 @@
 # TROWEXPANDMAX
 
+<!-- md-trans-meta sourceCommit=unknown translatedAt=2026-10-30T05:47:42.050Z pushedAt=2026-11-02T03:00:52.224Z nl=2 -->
 
-## Tile Operation Diagram
+## Instruction Diagram
 
-### Mode 1 — Scalar per row (ColMajor src1)
+### Mode 1: Scalar per Row (ColMajor src1)
 
-![TROWEXPANDMAX Mode 1 tile operation](../figures/isa/TROWEXPANDMAX.svg)
+![TROWEXPANDMAX mode 1 tile operation](../figures/isa/TROWEXPANDMAX.svg)
 
-### Mode 2 — 32-byte block per row (RowMajor src1)
+### Mode 2: 32-Byte Block per Row (RowMajor src1)
 
-![TROWEXPANDMAX Mode 2 tile operation](../figures/isa/TROWEXPANDMAX_mode2.svg)
+![TROWEXPANDMAX mode 2 tile operation](../figures/isa/TROWEXPANDMAX_mode2.svg)
 
 ## Introduction
 
-Row-wise broadcast max: take `max(src0, src1)` where the broadcast operand provides per-row values.
+Row broadcast maximum: takes the maximum of each row of the full-size operand (`src0` or `src1`) and the scalar per row of the expanded operand.
 
-The instruction supports two modes determined by the layout of the expanded operand (`src1` when `src0` matches `dst` shape, or `src0` when `src1` matches `dst` shape):
+The instruction supports two modes, determined by the layout of the expanded operand (`src1` when `src0` matches the shape of `dst`, and `src0` when `src1` matches the shape of `dst`):
 
-- **Mode 1**: The expanded operand is **ColMajor** with a single column (one scalar per row). Each scalar is broadcast across the entire row.
-- **Mode 2**: The expanded operand is **RowMajor** with `32 / sizeof(T)` columns per row (a 32-byte block per row).
+- **Mode 1**: The expanded operand is in **ColMajor** layout with a single column (one scalar per row). Each scalar is broadcast to the entire row.
+- **Mode 2**: The expanded operand is in **RowMajor** layout with `32 / sizeof(T)` columns per row (one 32-byte block per row). Each 32-byte block repeats naturally within the vector repeat stride, providing row-level broadcast.
 
-## Math Interpretation
+## Mathematical Semantics
 
-Let `R = dst.GetValidRow()` and `C = dst.GetValidCol()`.
+Assume `R = dst.GetValidRow()` and `C = dst.GetValidCol()`.
 
-The formulas below use `src1` as the expanded operand. If `src0` is expanded, exchange the input roles in the formulas.
+The following formulas use `src1` as the expanded operand. If `src0` is expanded, swap the input roles in the following formulas.
 
 ### Mode 1
 
-Let `s_i` be the per-row scalar taken from the expanded operand (one value per row, ColMajor layout).
+Assume that `s_i` is the scalar per row obtained from the expanded operand (one value per row, ColMajor layout).
 
 For `0 <= i < R` and `0 <= j < C`:
 
@@ -38,7 +39,7 @@ $$
 
 ### Mode 2
 
-Let `b_i` be the 32-byte block for row `i` taken from the expanded operand (RowMajor, `32 / sizeof(T)` values per row). The block repeats every `32 / sizeof(T)` elements within a row.
+Let `b_i` be the 32-byte block fetched from the expanded operand for row `i` (RowMajor layout, `32 / sizeof(T)` values per row). This block repeats every `32 / sizeof(T)` elements along the row direction.
 
 For `0 <= i < R` and `0 <= j < C`:
 
@@ -46,9 +47,10 @@ $$
 \mathrm{dst}_{i,j} = \max(\mathrm{src0}_{i,j}, b_i[\,j \bmod (32 / \mathit{sizeof}(T))\,])
 $$
 
-## C++ Intrinsic
+## C++ Built-in APIs
 
 Declared in `include/pto/common/pto_instr.hpp`:
+> The public include header is `<pto/pto-inst.hpp>`, and the internal declaration is located in `pto/common/pto_instr.hpp`.
 
 ```cpp
 template <typename TileDataDst, typename TileDataSrc0, typename TileDataSrc1, typename... WaitEvents>
@@ -62,55 +64,55 @@ PTO_INST RecordEvent TROWEXPANDMAX(TileDataDst &dst, TileDataSrc0 &src0, TileDat
 ## Constraints
 
 - `TileDataDst::DType == TileDataSrc0::DType == TileDataSrc1::DType`
-- `TileDataDst::DType`, `TileDataSrc0::DType`, `TileDataSrc1::DType` must be one of: `half`, `float`, `int16`, `int32` for A2, A3 and A5, `uint16`, `uint32`, `bfloat16_t`, `int8`, `uint8`, `int64`, `uint64` for A5.
+- `TileDataDst::DType`, `TileDataSrc0::DType`, and `TileDataSrc1::DType` must be one of the following: `half`, `float`, `int16`, `int32` (applicable to Atlas A2 training products/Atlas A2 inference products, Atlas A3 training products/Atlas A3 inference products, and Ascend 950PR/Ascend 950DT), `uint16`, `uint32`, `bfloat16_t`, `int8`, `uint8`, `int64`, `uint64` (applicable to Ascend 950PR/Ascend 950DT).
 - `TileDataDst` must be **RowMajor** (`TileDataDst::isRowMajor == true`).
-- At least one of `src0` or `src1` must have the same valid shape as `dst` (i.e., `validRow == dst.validRow` and `validCol == dst.validCol`). That operand is the full-sized operand. The other operand is the **expanded operand** (row-broadcast source).
-- If both inputs qualify as the full-sized operand, `src0` is selected; the other input must still satisfy the broadcast-mode constraints.
-- The full-sized operand must be **RowMajor** (`isRowMajor == true`).
+- At least one of `src0` or `src1` must have the same valid shape as `dst` (that is, `validRow == dst.validRow` and `validCol == dst.validCol`); this operand is the full-size operand. The other operand is the **expanded operand** (row broadcast source).
+- When both inputs satisfy the selection condition for the full-size operand, `src0` is preferred; the other input must still satisfy the constraints of the corresponding broadcast mode.
+- The full-size operand must be **RowMajor** (`isRowMajor == true`).
 
-### Mode 1 — Expanded operand is ColMajor (scalar per row)
+### Mode 1: Expanded Operand Is ColMajor (Scalar per Row)
 
 When the expanded operand is **ColMajor** (`isRowMajor == false`):
 
 - Its valid column count must be **1** (one scalar per row): `srcX.GetValidCol() == 1`.
 - Its valid row count must equal `dst.GetValidRow()`: `srcX.GetValidRow() == dst.GetValidRow()`.
 
-### Mode 2 — Expanded operand is RowMajor (32-byte block per row)
+### Mode 2: Expanded Operand Is RowMajor (32-Byte Block per Row)
 
 When the expanded operand is **RowMajor** (`isRowMajor == true`):
 
-- Its valid column count must be **32 / sizeof(T)** (a 32-byte block per row): `srcX.GetValidCol() == 32 / sizeof(T)`.
-  - For `half` / `int16` / `uint16`: `validCol == 16`.
-  - For `float` / `int32` / `uint32`: `validCol == 8`.
+- Its valid column count must be **32 / sizeof(T)** (one 32-byte block per row): `srcX.GetValidCol() == 32 / sizeof(T)`.
+  - For `half`/`int16`/`uint16`: `validCol == 16`.
+  - For `float`/`int32`/`uint32`: `validCol == 8`.
   - For `int64` / `uint64`: `validCol == 4`.
 - Its valid row count must equal `dst.GetValidRow()`: `srcX.GetValidRow() == dst.GetValidRow()`.
 
-### 64-bit element types (A5)
+### 64-Bit Element Types (Ascend 950PR/Ascend 950DT)
 
-- `int64_t` / `uint64_t` support both broadcast modes; Mode 2 repeats 4 elements per row.
-- Physical alignment requires `Cols % 4 == 0` for RowMajor and `Rows % 4 == 0` for a ColMajor expanded operand.
-- Results are exact 64-bit integer values.
+- `int64_t` / `uint64_t` support the two broadcast modes above; in mode 2, four elements are repeated per row.
+- Physical alignment requirements: `Cols % 4 == 0` for RowMajor, and `Rows % 4 == 0` for the ColMajor expanded operand.
+- The result is an exact 64-bit integer value.
 
-### Additional target-specific constraints
+### Other Target-Specific Constraints
 
-Exact layout, fractal, and alignment constraints may vary by backend target. See backend headers under `include/pto/npu/*/TRowExpand*.hpp`.
+The specific layout, fractal, and alignment constraints may vary by backend target. See the backend header files under `include/pto/npu/*/TRowExpand*.hpp`.
 
-### Temporary tile
+### Temporary Tile
 
-The C++ API provides an overload with an explicit `TileDataTmp &tmp`. A2A3 supports only Mode 1; A5 supports both modes and ignores `tmp`.
+The C++ API provides an overload that explicitly passes `TileDataTmp &tmp`. Atlas A2/A3 training products/Atlas A2/A3 inference products support only mode 1; Ascend 950PR/Ascend 950DT support both mode 1 and mode 2, and do not use `tmp`.
 
-- **A2A3**: The tmp tile is used as a broadcast buffer. The per-row scalar values from the ColMajor expanded operand are broadcast via the `vbrcb` instruction into the tmp buffer, creating a 32-byte block per row, which is then used as the expanded operand in the binary operation. The `vbrcb` instruction uses a repeat stride of 8 blocks (256 bytes) between repeat groups, processing 8 rows per repeat. Minimum tmp size calculation:
+- **Atlas A2/A3 training products/Atlas A2/A3 inference products**: The tmp tile is used as a broadcast buffer. The scalar value per row of the ColMajor expanded operand is broadcast to the tmp buffer via the `vbrcb` instruction, creating a 32-byte block for each row, and then used as the expanded operand in the binary operation. The repeat stride of the `vbrcb` instruction is 8 blocks (256 bytes), and each repeat handles 8 rows. The minimum tmp size is calculated as follows:
     - **Common parameters**:
         - `R = dst.GetValidRow()`, `T = TileDataDst::DType`.
-    - For `R < 256`:
-        $$ \text{tmpSize} = \left\lceil\frac{R}{8}\right\rceil \times 256 \text{ bytes} $$
-    - For `R >= 256`:
-        - The operation is looped, with at most 30 repeats (240 rows) per loop iteration. The tmp buffer is reused across loops, so the per-loop requirement is:
-        $$ \text{tmpSize} = 30 \times 256 = 7680 \text{ bytes} $$
-    - A compact shape-independent upper bound for any Mode 1 invocation is **8KB** (8192 bytes).
-    - The 3-arg overload (without `tmp`) supports both Mode 1 and Mode 2. For Mode 1, it uses an internal 8KB buffer (`TMP_UB_OFFSET`). For Mode 2, no broadcast buffer is needed.
-- **A5**: The `tmp` tile is accepted and ignored (`[[maybe_unused]]`). A5 hardware supports row-broadcast natively via the `vlds` instruction's broadcast modes, so no scratch buffer is required.
+    - When `R < 256`:
+        $ \text{tmpSize} = \left\lceil\frac{R}{8}\right\rceil \times 256 \text{ bytes} $
+    - When `R >= 256`:
+        - The operation uses a loop, with at most 30 repeats (240 rows) per loop. The tmp buffer is reused across loops, and each loop requires:
+        $ \text{tmpSize} = 30 \times 256 = 7680 \text{ bytes} $
+    - For any mode 1 call, a compact shape-independent upper bound is **8 KB** (8192 bytes).
+    - The 3-parameter overload without `tmp` supports mode 1 and mode 2. For mode 1, an internal 8 KB buffer (`TMP_UB_OFFSET`) is used. For mode 2, no broadcast buffer is required.
+- **Ascend 950PR/Ascend 950DT**: The `tmp` tile is accepted but not used (`[[maybe_unused]]`). The Ascend 950PR/Ascend 950DT hardware natively supports row broadcast through the broadcast mode of the `vlds` instruction, so no temporary buffer is required.
 
 ## Examples
 
-See related examples in `docs/isa/` and `docs/coding/tutorials/`.
+See the relevant examples in `docs/isa/` and `docs/coding/tutorials/`.

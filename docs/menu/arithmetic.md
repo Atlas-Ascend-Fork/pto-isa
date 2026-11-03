@@ -1,2 +1,2 @@
 # Arithmetic Operations
-<!-- md-trans-meta sourceCommit=unknown translatedAt=2026-08-26T05:26:39.755Z pushedAt=2026-08-29T09:05:18.476Z -->
+<!-- md-trans-meta sourceCommit=unknown translatedAt=2026-10-30T06:18:08.893Z pushedAt=2026-11-02T03:00:52.244Z nl=1 -->

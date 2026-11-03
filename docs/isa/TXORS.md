@@ -1,23 +1,25 @@
 # TXORS
 
+<!-- md-trans-meta sourceCommit=unknown translatedAt=2026-10-30T06:16:56.961Z pushedAt=2026-11-02T03:00:52.245Z nl=2 -->
 
-## Tile Operation Diagram
+## Instruction Diagram
 
 ![TXORS tile operation](../figures/isa/TXORS.svg)
 
 ## Introduction
 
-Elementwise bitwise XOR of a tile and a scalar.
+Performs element-wise bitwise XOR between a tile and a scalar.
 
-## Math Interpretation
+## Mathematical Semantics
 
 For each element `(i, j)` in the valid region:
 
 $$ \mathrm{dst}_{i,j} = \mathrm{src}_{i,j} \oplus \mathrm{scalar} $$
 
-## C++ Intrinsic
+## C++ Built-in APIs
 
 Declared in `include/pto/common/pto_instr.hpp`:
+> The public include header is `<pto/pto-inst.hpp>`, and the internal declaration is located in `pto/common/pto_instr.hpp`.
 
 ```cpp
 template <typename TileDataDst, typename TileDataSrc, typename TileDataTmp, typename... WaitEvents>
@@ -26,26 +28,26 @@ PTO_INST RecordEvent TXORS(TileDataDst &dst, TileDataSrc &src0, typename TileDat
 
 ## Constraints
 
-- **Implementation checks (A2A3)**:
-    - Supported element types are `uint8_t`, `int8_t`, `uint16_t`, `int16_t`, `uint32_t`, `int32_t`.
+- **Implementation check (Atlas A2/A3 training products/Atlas A2/A3 inference products)**:
+    - The supported element types are `uint8_t`, `int8_t`, `uint16_t`, `int16_t`, `uint32_t`, and `int32_t`.
     - `dst`, `src`, and `tmp` must use the same element type.
-    - In manual mode, source, destination, and temporary storage must not overlap in memory.
-- **Implementation checks (A5)**:
+    - In manual mode, the memory regions of the source, destination, and temporary storage must not overlap.
+- **Implementation check (Ascend 950PR/Ascend 950DT)**:
     - Supported element types are `uint8_t`, `int8_t`, `uint16_t`, `int16_t`, `uint32_t`, `int32_t`, `int64_t`, `uint64_t`.
-    - `dst` and `src` element types must match.
-    - `src.GetValidRow()/GetValidCol()` must match `dst`.
+    - The element types of `dst` and `src` must be consistent.
+    - `src.GetValidRow()/GetValidCol()` must be consistent with `dst`.
 - **Valid region**:
-    - The op uses `dst.GetValidRow()` / `dst.GetValidCol()` as the iteration domain.
+    - The operation uses `dst.GetValidRow()`/`dst.GetValidCol()` as the iteration domain.
 
 ## Temporary Space
 
-### A2A3
+### Atlas A2/A3 Training Products/Atlas A2/A3 Inference Products
 
-`tmp` **is used** as intermediate scratch storage for the scalar XOR decomposition. `tmp` must have the same element type and valid shape as `dst`.
+`tmp` **is used** as intermediate temporary storage for scalar XOR decomposition. `tmp` must have the same element type and valid shape as `dst`.
 
-### A5
+### Ascend 950PR/Ascend 950DT
 
-`tmp` is accepted by the interface but **not used** by the A5 implementation. The A5 backend uses the `vxor` vector instruction with a broadcast scalar register and does not require scratch tile storage. `tmp` is retained in the C++ intrinsic signature solely for API compatibility with A2A3.
+`tmp` is accepted by the API but **not used** by the Ascend 950PR/Ascend 950DT implementation. The Ascend 950PR/Ascend 950DT backend uses the `vxor` vector instruction with a broadcast scalar register and does not require temporary tile storage. `tmp` is retained in the C++ built-in API signature only for API compatibility with Atlas A2/A3 training products/Atlas A2/A3 inference products.
 
 ## Examples
 

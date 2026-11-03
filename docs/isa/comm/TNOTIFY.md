@@ -1,20 +1,22 @@
 # TNOTIFY
 
+<!-- md-trans-meta sourceCommit=unknown translatedAt=2026-10-30T04:09:33.848Z pushedAt=2026-11-02T03:00:52.143Z nl=2 -->
+
 ## Introduction
 
-Send flag notification to remote NPU. Used for lightweight synchronization between NPUs without transferring bulk data.
+Sends a flag notification to the remote NPU. It is used for lightweight synchronization between NPUs without transferring large amounts of data.
 
-## Math Interpretation
+## Mathematical Semantics
 
 For `NotifyOp::Set`:
 
-$$ \mathrm{signal}^{\mathrm{remote}} = \mathrm{value} $$
+$$\mathrm{signal}^{\mathrm{remote}} = \mathrm{value}$$
 
 For `NotifyOp::AtomicAdd`:
 
-$$ \mathrm{signal}^{\mathrm{remote}} \mathrel{+}= \mathrm{value} \quad (\text{atomic}) $$
+$\mathrm{signal}^{\mathrm{remote}} \mathrel{+}= \mathrm{value} \quad (\text{atomic operation})$
 
-## C++ Intrinsic
+## C++ Built-in APIs
 
 Declared in `include/pto/comm/pto_comm_inst.hpp`:
 
@@ -28,11 +30,11 @@ PTO_INST void TNOTIFY(GlobalSignalData &dstSignalData, int32_t value, NotifyOp o
 - **Type constraints**:
     - `GlobalSignalData::DType` must be `int32_t` (32-bit signal).
 - **Memory constraints**:
-    - `dstSignalData` must point to remote address (on target NPU).
-    - `dstSignalData` should be 4-byte aligned.
+    - `dstSignalData` must point to a remote address (target NPU).
+    - `dstSignalData` must be 4-byte aligned.
 - **Operation semantics**:
-    - `NotifyOp::Set`: Direct store to remote memory.
-    - `NotifyOp::AtomicAdd`: Hardware atomic add using `st_atomic` instruction.
+    - `NotifyOp::Set`: directly stores to the remote memory.
+    - `NotifyOp::AtomicAdd`: performs a hardware atomic addition using the `st_atomic` instruction.
 
 ## Examples
 
@@ -46,7 +48,7 @@ using namespace pto;
 void notify_set(__gm__ int32_t* remote_signal) {
     comm::Signal sig(remote_signal);
 
-    // Set remote signal to 1
+    // Set the remote signal to 1.
     comm::TNOTIFY(sig, 1, comm::NotifyOp::Set);
 }
 ```
@@ -61,7 +63,7 @@ using namespace pto;
 void atomic_increment(__gm__ int32_t* remote_counter) {
     comm::Signal counter(remote_counter);
 
-    // Atomically add 1 to remote counter
+    // Atomically add 1 to the remote counter.
     comm::TNOTIFY(counter, 1, comm::NotifyOp::AtomicAdd);
 }
 ```
@@ -73,7 +75,7 @@ void atomic_increment(__gm__ int32_t* remote_counter) {
 
 using namespace pto;
 
-// Producer: notify when data is ready
+// Producer: sends a notification after the data is ready.
 void producer(__gm__ int32_t* remote_flag) {
     // ... produce data ...
 
@@ -81,7 +83,7 @@ void producer(__gm__ int32_t* remote_flag) {
     comm::TNOTIFY(flag, 1, comm::NotifyOp::Set);
 }
 
-// Consumer: wait for data
+// Consumer: waits for the data to be ready.
 void consumer(__gm__ int32_t* local_flag) {
     comm::Signal flag(local_flag);
     comm::TWAIT(flag, 1, comm::WaitCmp::EQ);

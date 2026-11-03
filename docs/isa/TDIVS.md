@@ -1,29 +1,31 @@
 # TDIVS
 
+<!-- md-trans-meta sourceCommit=unknown translatedAt=2026-10-30T04:54:34.248Z pushedAt=2026-11-02T03:00:52.179Z nl=2 -->
 
-## Tile Operation Diagram
+## Instruction Diagram
 
 ![TDIVS tile operation](../figures/isa/TDIVS.svg)
 
 ## Introduction
 
-Elementwise division with a scalar (tile/scalar or scalar/tile).
+Performs element-wise division with a scalar (tile/scalar or scalar/tile).
 
-## Math Interpretation
+## Mathematical Semantics
 
 For each element `(i, j)` in the valid region:
 
-- Tile/scalar:
+- Tile/scalar form:
 
   $$ \mathrm{dst}_{i,j} = \frac{\mathrm{src}_{i,j}}{\mathrm{scalar}} $$
 
-- Scalar/tile:
+- Scalar/tile form:
 
   $$ \mathrm{dst}_{i,j} = \frac{\mathrm{scalar}}{\mathrm{src}_{i,j}} $$
 
-## C++ Intrinsic
+## C++ Built-in APIs
 
 Declared in `include/pto/common/pto_instr.hpp`:
+> The public include header is `<pto/pto-inst.hpp>`, and the internal declaration is located in `pto/common/pto_instr.hpp`.
 
 ```cpp
 template <auto PrecisionType = DivAlgorithm::DEFAULT, typename TileDataDst, typename TileDataSrc,
@@ -37,35 +39,35 @@ PTO_INST RecordEvent TDIVS(TileDataDst &dst, typename TileDataDst::DType scalar,
                            WaitEvents &... events)
 ```
 
-`PrecisionType` has the following values available:
+`PrecisionType` can specify the following values:
 
-* `DivAlgorithm::DEFAULT`: Normal algorithm, faster but with lower precision.
-* `DivAlgorithm::HIGH_PRECISION`: High precision algorithm, but slower.
+* `DivAlgorithm::DEFAULT`: normal algorithm, fast but with lower precision.
+* `DivAlgorithm::HIGH_PRECISION`: high-precision algorithm, slower.
 
 ## Constraints
 
-- **Implementation checks (A2A3)** (both overloads):
-    - `TileData::DType` must be one of: `int32_t`, `int`, `int16_t`, `half`, `float16_t`, `float`, `float32_t`.
-    - Tile location must be vector (`TileData::Loc == TileType::Vec`).
-    - Static valid bounds: `TileData::ValidRow <= TileData::Rows` and `TileData::ValidCol <= TileData::Cols`.
+- **Implementation check (Atlas A2/A3 training products/Atlas A2/A3 inference products)** (two overloads):
+    - `TileData::DType` must be one of the following: `int32_t`, `int`, `int16_t`, `half`, `float16_t`, `float`, `float32_t`.
+    - The tile position must be a vector (`TileData::Loc == TileType::Vec`).
+    - Static valid boundary: `TileData::ValidRow <= TileData::Rows` and `TileData::ValidCol <= TileData::Cols`.
     - Runtime: `src0.GetValidRow() == dst.GetValidRow()` and `src0.GetValidCol() == dst.GetValidCol()`.
-    - Tile layout must be row-major (`TileData::isRowMajor`).
-- **Implementation checks (A5)** (both overloads):
-    - `TileData::DType` must be one of: `uint16_t`, `int16_t`, `uint32_t`, `int32_t`, `int64_t`, `uint64_t`, `half`, `float`.
-    - Tile location must be vector (`TileData::Loc == TileType::Vec`).
-    - Static valid bounds: `TileData::ValidRow <= TileData::Rows` and `TileData::ValidCol <= TileData::Cols`.
+    - The tile layout must be row-major (`TileData::isRowMajor`).
+- **Implementation check (Ascend 950PR/Ascend 950DT)** (two overloads):
+    - `TileData::DType` must be one of the following: `uint16_t`, `int16_t`, `uint32_t`, `int32_t`, `int64_t`, `uint64_t`, `half`, `float`.
+    - The tile position must be a vector (`TileData::Loc == TileType::Vec`).
+    - Static valid boundary: `TileData::ValidRow <= TileData::Rows` and `TileData::ValidCol <= TileData::Cols`.
     - Runtime: `src0.GetValidRow() == dst.GetValidRow()` and `src0.GetValidCol() == dst.GetValidCol()`.
-    - Tile layout must be row-major (`TileData::isRowMajor`).
+    - The tile layout must be row-major (`TileData::isRowMajor`).
 - **Valid region**:
-    - The op uses `dst.GetValidRow()` / `dst.GetValidCol()` as the iteration domain.
-- **Division-by-zero**:
-    - Behavior is target-defined; on A5 the tile/scalar form maps to multiply-by-reciprocal and uses `1/0 -> +inf` for `scalar == 0`.
-- **High Precision Algorithm**
-    - Only available on A5, `PrecisionType` option is ignored on A3.
+    - The operation uses `dst.GetValidRow()`/`dst.GetValidCol()` as the iteration domain.
+- **Division by zero**:
+    - The behavior is target-defined; on Ascend 950PR/Ascend 950DT, the tile/scalar form maps to multiplication by the reciprocal, and uses `1/0 -> +inf` for `scalar == 0`.
+- **High-precision algorithm**:
+    - Valid only on Ascend 950PR/Ascend 950DT; the `PrecisionType` option is ignored on Atlas A3 training products/Atlas A3 inference products.
 
 ## Examples
 
-### Auto
+### Automatic
 
 ```cpp
 #include <pto/pto-inst.hpp>

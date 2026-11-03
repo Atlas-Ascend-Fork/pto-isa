@@ -1,33 +1,35 @@
 # TINSERT
 
+<!-- md-trans-meta sourceCommit=unknown translatedAt=2026-10-30T05:07:56.643Z pushedAt=2026-11-02T03:00:52.191Z nl=2 -->
 
-## Tile Operation Diagram
+## Instruction Diagram
 
 ![TINSERT tile operation](../figures/isa/TINSERT.svg)
 
 ## Introduction
 
-Insert a source sub-tile into a destination tile at `(indexRow, indexCol)`. Conceptually the inverse of `TEXTRACT`.
+Inserts a source sub-tile into a destination tile at the `(indexRow, indexCol)` offset. Conceptually, it is the inverse operation of `TEXTRACT`.
 
 `TINSERT` is used for:
 
-- Acc → Mat insertion (with optional relu, scalar-quant, or vector-quant)
-- Acc → Vec insertion (with optional `AccToVecMode`, relu, scalar-quant, or vector-quant) *(A5)*
-- Vec → Mat insertion (ND, NZ, and ZN layouts) *(A5)*
-- Vec → Vec insertion (ND and NZ layouts) *(A5)*
-- NZ split insertion (`SPLIT2`, `SPLIT4`) *(A5)*
+- Acc → Mat insertion (with optional relu, scalar quantization, or vector quantization)
+- Acc → Vec insertion (with optional `AccToVecMode`, relu, scalar quantization, or vector quantization) *(Ascend 950PR/Ascend 950DT)*
+- Vec → Mat insertion (ND and NZ layouts) *(Ascend 950PR/Ascend 950DT)*
+- Vec → Vec insertion (ND and NZ layouts) *(Ascend 950PR/Ascend 950DT)*
+- NZ split insertion (`SPLIT2`, `SPLIT4`) *(Ascend 950PR/Ascend 950DT)*
 
-## Math Interpretation
+## Mathematical Semantics
 
-Let `R = src.GetValidRow()` and `C = src.GetValidCol()`. For `0 <= i < R` and `0 <= j < C`:
+Assume `R = src.GetValidRow()` and `C = src.GetValidCol()`. For `0 <= i < R` and `0 <= j < C`:
 
 $$
 \mathrm{dst}_{\mathrm{indexRow}+i,\;\mathrm{indexCol}+j} = \mathrm{src}_{i,j}
 $$
 
-## C++ Intrinsic
+## C++ Built-in APIs
 
 Declared in `include/pto/common/pto_instr.hpp`:
+> The public include header is `<pto/pto-inst.hpp>`, and the internal declaration is located in `pto/common/pto_instr.hpp`.
 
 ```cpp
 template <typename DstTileData, typename SrcTileData, typename... WaitEvents>
@@ -87,7 +89,7 @@ PTO_INST RecordEvent TINSERT(DstTileData &dst, SrcTileData &src,
                              uint16_t indexRow, uint16_t indexCol,
                              WaitEvents &... events);
 
-#ifdef PTO_NPU_ARCH_A5
+#if defined(PTO_NPU_ARCH_A5) || defined(PTO_NPU_ARCH_KIRIN9030) || defined(PTO_NPU_ARCH_KIRINX90)
 template <TInsertMode mode, typename DstTileData, typename SrcTileData,
           typename... WaitEvents>
 PTO_INST RecordEvent TINSERT(DstTileData &dst, SrcTileData &src,
@@ -115,130 +117,116 @@ PTO_INST RecordEvent TINSERT(DstTileData &dst, SrcTileData &src, FpTileData &fp,
                              WaitEvents &... events);
 ```
 
-The `STPhase` overloads set the unit flag on the L0C move-out instruction so it pairs with
-`TMATMUL<AccPhase>` for Cube-to-Fixpipe hardware synchronization, removing the explicit
-`set_flag`/`wait_flag` pair. They are exposed only on targets with matching backend support
-(A2A3, Ascend 950PR/Ascend 950DT and the CPU simulator); the applicable paths and the pairing rule
-are listed under the implementation checks below.
+The `STPhase` overload writes the unit flag into the L0C move-out instruction, which is used to pair with `TMATMUL<AccPhase>` to complete the Cube-to-Fixpipe hardware synchronization, thereby eliminating the explicit `set_flag`/`wait_flag`. It is exposed only on targets that have a corresponding backend implementation (Atlas A2/A3 training products/Atlas A2/A3 inference products, Ascend 950PR/Ascend 950DT, and the CPU simulator). For the applicable scope and pairing rules, see the implementation checks below.
 
-`TINSERT_FP(...)` is retained for source compatibility with the legacy fp-quantized form and maps directly
-to the no-`mode` `TINSERT_IMPL(dst, src, fp, indexRow, indexCol)` path. The canonical
-`TINSERT(..., fp, ...)` overload is selected only for `FpTileData::Loc == TileType::Scaling`.
-`TINSERT_FP` also has an `STPhase` form, aligned with `TMOV_FP` / `TSTORE_FP`; the semantics match the
-canonical overload.
+`TINSERT_FP(...)` retains a source-compatibility entry for the historical fp quantization form and directly maps to the `TINSERT_IMPL(dst, src, fp, indexRow, indexCol)` path without `mode`. The canonical same-name `TINSERT(..., fp, ...)` overload participates in matching only when `FpTileData::Loc == TileType::Scaling`. `TINSERT_FP` also provides an `STPhase` version, aligned with `TMOV_FP` / `TSTORE_FP`, and its semantics are consistent with the canonical interface.
 
 ## Constraints
 
-### General constraints / checks
+### General Constraints/Checks
 
-- The `STPhase` overloads (unit flag) apply only to the `TileType::Acc -> TileType::Mat` (L0C to L1)
-  path; a `TileType::Vec` destination is rejected at compile time. They are exposed on A2A3,
-  Ascend 950PR/Ascend 950DT and the CPU simulator.
-- The move-out values do not mirror the accumulation values. The `TMATMUL` that produced the L0C result
-  must already be `AccPhase::Final`, that is, the data is ready. `STPhase::Final` marks the last move-out
-  and releases the unit flag. `STPhase::Partial` is only for the non-last move-outs when one L0C tile is
-  drained more than once; it does not release the flag. Pairing `STPhase::Partial` with
-  `AccPhase::Partial` makes the fixpipe wait on a flag that never arrives, which hangs; this was
-  reproduced on the Ascend 950PR simulator.
-- Acc-to-Mat move-out has passed A3 hardware tests covering `STPhase::Final` and
-  `STPhase::Partial` followed by `STPhase::Final` in `tmov_acc2mat`.
-  Ascend 950PR simulator tests have passed. On Ascend 950PR hardware with CANN 9.2.0, all 4 targeted
-  `tinsert` tests (`TInsertTest.case_acc2mat_*`) passed with max diff 0, covering the baseline,
-  `Final`, and `Partial` followed by `Final`.
-- `TINSERT` has these overload families:
-    - plain insert: `TINSERT(dst, src, indexRow, indexCol)`
+- The `STPhase` overload (unit flag) supports only the `TileType::Acc -> TileType::Mat` (L0C→L1) path;
+  A compile-time error is reported when the destination is `TileType::Vec`. This overload is exposed on Atlas A2/A3 training products/Atlas A2/A3 inference products, Ascend 950PR/Ascend 950DT, and the CPU simulator.
+- The value selection rule on the move-out side differs from that on the accumulation side and is not a simple correspondence:
+  The `TMATMUL` that produces this L0C result must already be `AccPhase::Final`, meaning the data is ready; `STPhase::Final` is used for the last move-out and releases the unit flag; `STPhase::Partial` is used only for the non-final instructions when the same L0C block is moved out in multiple parts, and it does not release the unit flag. Pairing `STPhase::Partial` with `AccPhase::Partial` causes the fixpipe to wait for a flag that will never arrive and hang, a phenomenon that has been reproduced on the Ascend 950PR simulator.
+- The Acc→Mat move-out has passed on-board testing on A3, and `tmov_acc2mat` covers `STPhase::Final` and
+  `STPhase::Partial` followed by `STPhase::Final`.
+  Ascend 950PR simulation tests have passed; on the Ascend 950PR board with CANN 9.2.0,
+  all 4 directional use cases of `tinsert` (`TInsertTest.case_acc2mat_*`) passed, with max diff of 0,
+  covering baseline, `Final`, and `Partial` followed by `Final`.
+- `TINSERT` has the following overload families:
+    - Normal insertion: `TINSERT(dst, src, indexRow, indexCol)`
     - relu form: `TINSERT<..., reluMode>(dst, src, indexRow, indexCol)`
-    - accumulator-to-vector form: `TINSERT<..., mode, reluMode>(dst, src, indexRow, indexCol)`
-    - scalar-quant form: `TINSERT<..., reluMode>(dst, src, preQuantScalar, indexRow, indexCol)` and `TINSERT<..., mode, reluMode>(dst, src, preQuantScalar, indexRow, indexCol)`
-    - vector-quant form: canonical `TINSERT<..., FpTileData, reluMode>(dst, src, fp, indexRow, indexCol)`,
-      legacy `TINSERT_FP<..., reluMode>(dst, src, fp, indexRow, indexCol)`, and target-supported
-      `TINSERT<..., FpTileData, mode, reluMode>(dst, src, fp, indexRow, indexCol)` Acc-to-Vec routing
-    - NZ split form *(A5 only)*: `TINSERT<TInsertMode::SPLIT2>(dst, src, indexRow, indexCol)` or `TINSERT<TInsertMode::SPLIT4>(...)`
-- `reluMode` is `ReluPreMode::{NoRelu, NormalRelu}`.
-- `mode` is `AccToVecMode::{SingleModeVec0, SingleModeVec1, DualModeSplitM, DualModeSplitN}`.
-  The vector-quantized `fp + mode` overload is exposed only on targets with matching backend support
-  (A5, kirin9030, kirinX90, and CPU simulator).
-- Runtime bounds: `indexRow + src.ValidRow <= dst.Rows` and `indexCol + src.ValidCol <= dst.Cols`.
+    - Accumulator-to-vector form: `TINSERT<..., mode, reluMode>(dst, src, indexRow, indexCol)`
+    - Scalar quantization form: `TINSERT<..., reluMode>(dst, src, preQuantScalar, indexRow, indexCol)` and `TINSERT<..., mode, reluMode>(dst, src, preQuantScalar, indexRow, indexCol)`
+    - Vector quantization form: `TINSERT<..., FpTileData, reluMode>(dst, src, fp, indexRow, indexCol)`,
+      `TINSERT_FP<..., reluMode>(dst, src, fp, indexRow, indexCol)`, and the target-supported
+      `TINSERT<..., FpTileData, mode, reluMode>(dst, src, fp, indexRow, indexCol)` Acc-to-Vec route
+    - NZ split form *(Ascend 950PR/Ascend 950DT/Kirin9030/KirinX90 only)*: `TINSERT<TInsertMode::SPLIT2>(dst, src, indexRow, indexCol)` or `TINSERT<TInsertMode::SPLIT4>(...)`
+- `reluMode` takes the value of `ReluPreMode::{NoRelu, NormalRelu}`.
+- `mode` takes the value of `AccToVecMode::{SingleModeVec0, SingleModeVec1, DualModeSplitM, DualModeSplitN}`.
+  The vector quantization `fp + mode` overload is exposed only on targets that have a corresponding backend implementation
+  (A5, kirin9030, kirinX90, and the CPU simulator).
+- Runtime boundary: `indexRow + src.ValidRow <= dst.Rows` and `indexCol + src.ValidCol <= dst.Cols`.
 
-### A2A3 implementation checks
+### Implementation Check for Atlas A2/A3 Training Products/Atlas A2/A3 Inference Products
 
-- Supported tile-type pair: `TileType::Acc → TileType::Mat` only.
-- Source layout must be `(BFractal: ColMajor, SFractal: RowMajor)`.
-- Destination layout must be `(BFractal: ColMajor, SFractal: RowMajor)` with `SFractalSize == 512`.
-- `Dst.Cols * sizeof(DstDType)` must be a multiple of `32` bytes and non-zero.
-- **Plain / relu** (non-quant) supported dtype pairs:
+- Supported tile type pairs: only `TileType::Acc → TileType::Mat`.
+- The source layout must be `(BFractal: ColMajor, SFractal: RowMajor)`.
+- The target layout must be `(BFractal: ColMajor, SFractal: RowMajor)`, and `SFractalSize == 512`.
+- `Dst.Cols * sizeof(DstDType)` must be a non-zero multiple of `32` bytes.
+- Supported dtype pairs for **normal/relu** (non-quantized):
     - `float` Acc → `half`, `bfloat16_t`
-- **Scalar-quant** supported dtype pairs:
+- Supported dtype pairs for **scalar quantization**:
     - `float` Acc → `int8_t`
     - `int32_t` Acc → `int8_t`, `uint8_t`, `half`, `int16_t`
-- **Vector-quant** (`TINSERT` with `FpTileData`; legacy `TINSERT_FP` alias) supported dtype pairs:
+- **Vector quantization** (`TINSERT` with `FpTileData`; historical `TINSERT_FP` alias) supported dtype pairs:
     - `float` Acc → `int8_t`
     - `int32_t` Acc → `int8_t`, `uint8_t`, `half`, `int16_t`
-- The canonical vector-quant overload requires an `FpTileData` scaling operand (`TileType::Scaling`);
-  `TINSERT_FP(...)` keeps legacy source compatibility and is checked by the selected backend implementation.
+- The normal vector quantization overload requires the `FpTileData` Scaling operand (`TileType::Scaling`);
+  `TINSERT_FP(...)` maintains history source compatibility, and the selected backend implementation continues to check its validity.
 
-### A5 implementation checks
+### Ascend 950PR/Ascend 950DT Implementation Check
 
-- In addition to the Acc → Mat path, A5 supports Acc → Vec, Vec → Vec, Vec → Mat, and NZ split paths.
+In addition to the Acc → Mat path, Ascend 950PR/Ascend 950DT also supports the Acc → Vec, Vec → Vec, Vec → Mat, and NZ split paths.
 
 - **Acc → Mat** (`TileType::Acc → TileType::Mat`):
-    - Source Acc type must be `float` or `int32_t`; source layout must be `(BFractal: ColMajor, SFractal: RowMajor)`.
-    - Destination layout must be `(!isRowMajor, SFractal: RowMajor)` (NZ format).
-    - **Non-quant** (plain / relu) destination types:
+    - The source Acc type must be `float` or `int32_t`; the source layout must be `(BFractal: ColMajor, SFractal: RowMajor)`.
+    - The target layout must be `(!isRowMajor, SFractal: RowMajor)` (NZ format).
+    - **Non-quantized** (normal/relu) target types:
         - `float` Acc → `half`, `bfloat16_t`, `float`
         - `int32_t` Acc → `int32_t`
-    - **Scalar-quant** destination types:
+    - **Scalar quantization** target types:
         - `float` Acc → `int8_t`, `uint8_t`, `hifloat8_t`, `half`, `bfloat16_t`, `float8_e4m3_t`
         - `int32_t` Acc → `int8_t`, `uint8_t`, `half`, `bfloat16_t`
-    - **Vector-quant** (`TINSERT` with `FpTileData`; legacy `TINSERT_FP` alias) destination types: same as scalar-quant above.
+    - **Vector quantization** (`TINSERT` with `FpTileData`; historical `TINSERT_FP` alias) target type: same as scalar quantization.
 
 - **Acc → Vec** (`TileType::Acc → TileType::Vec`):
-    - Source Acc type must be `float` or `int32_t`; source layout must be `(BFractal: ColMajor, SFractal: RowMajor)`.
-    - **Non-quant** (plain / relu) destination types:
+    - The source Acc type must be `float` or `int32_t`; the source layout must be `(BFractal: ColMajor, SFractal: RowMajor)`.
+    - **Non-quantized** (normal/relu) target types:
         - `float` Acc → `half`, `bfloat16_t`, `float`
         - `int32_t` Acc → `int32_t`
-    - **Scalar-quant** destination types:
+    - **Scalar quantization** target types:
         - `float` Acc → `int8_t`, `uint8_t`, `hifloat8_t`, `half`, `bfloat16_t`, `float8_e4m3_t`
         - `int32_t` Acc → `int8_t`, `uint8_t`, `half`, `bfloat16_t`
-    - **Vector-quant** (`TINSERT` with `FpTileData`; legacy `TINSERT_FP` alias) destination types: same as scalar-quant above.
-    - Destination layout must be one of: NZ-to-NZ (`!isRowMajor, SFractal: RowMajor`), NZ-to-ND (`isRowMajor, SFractal: NoneBox`), or NZ-to-DN (`!isRowMajor, SFractal: NoneBox`).
+    - **Vector quantization** (`TINSERT` with `FpTileData`; historical `TINSERT_FP` alias) target types: same as scalar quantization.
+    - The target layout must be one of the following: NZ-to-NZ (`!isRowMajor, SFractal: RowMajor`), NZ-to-ND (`isRowMajor, SFractal: NoneBox`), or NZ-to-DN (`!isRowMajor, SFractal: NoneBox`).
     - `AccToVecMode` selects `SingleModeVec0`, `SingleModeVec1`, `DualModeSplitM`, or `DualModeSplitN`.
-    - Dual-destination modes (`DualModeSplitM`, `DualModeSplitN`) require `QuantMode_t::NoQuant` and do not support the NZ-to-DN path.
-    - For 32-bit destination types (`float`/`int32_t`), when using `DualModeSplitN` the `ValidCol` (before the split) must be a multiple of `32`.
-    - Destination stride must be non-zero and `dstStride * sizeof(dstType)` must be a multiple of `32` bytes.
+    - Dual-target modes (`DualModeSplitM`, `DualModeSplitN`) require `QuantMode_t::NoQuant` and do not support the NZ-to-DN path.
+    - For 32-bit target types (`float`/`int32_t`), when using `DualModeSplitN`, the `ValidCol` before splitting must be an integer multiple of `32`.
+    - The target stride must be non-zero, and `dstStride * sizeof(dstType)` must be a multiple of `32` bytes.
 
 - **Vec → Vec** (`TileType::Vec → TileType::Vec`):
     - `DstTileData::DType` must equal `SrcTileData::DType`.
     - Supported element types: `half`, `bfloat16_t`, `float`, `int32_t`, `int8_t`, `hifloat8_t`, `float8_e4m3_t`, `float8_e5m2_t`, `float8_e8m0_t`, `float4_e2m1x2_t`, `float4_e1m2x2_t`.
-    - Source and destination layout must match (both ND or both NZ).
-    - ND path: source valid region must fit within destination bounds. Dispatch selects `copy_ubuf_to_ubuf` (aligned), `vlds`/`vsts` (stride-aligned, unaligned validCol), `vlds`/`vstus` (unaligned strides or indexCol), or scalar copy (1×1 element).
-    - NZ path: source cols must not exceed destination cols. Uses `ComputeNZBlockParams` for fractal-block `copy_ubuf_to_ubuf`.
+    - The source and target layouts must match (both ND or both NZ).
+    - ND path: The source valid region must be within the target boundary. The dispatch selects `copy_ubuf_to_ubuf` (aligned), `vlds`/`vsts` (stride-aligned, unaligned validCol), `vlds`/`vstus` (unaligned stride or indexCol), or scalar copy (1×1 element).
+    - NZ path: The number of source columns must not exceed the number of target columns. Use `ComputeNZBlockParams` for fractal block `copy_ubuf_to_ubuf`.
 
 - **Vec → Mat** (`TileType::Vec → TileType::Mat`, UB → L1):
     - `DstTileData::DType` must equal `SrcTileData::DType`.
     - Supported element types: `half`, `bfloat16_t`, `float`, `int32_t`, `int8_t`, `hifloat8_t`, `float8_e4m3_t`, `float8_e5m2_t`, `float8_e8m0_t`, `float4_e2m1x2_t`, `float4_e1m2x2_t`.
-    - ND path: source must be `isRowMajor`; uses `copy_ubuf_to_cbuf`. Data bytes per row must be aligned to `BLOCK_BYTE_SIZE` (32 bytes) for row-wise burst.
-    - NZ path: source must be `(!isRowMajor, SFractal: RowMajor)`; uses `ComputeNZBlockParams` for fractal-block `copy_ubuf_to_cbuf`. For fp4 types (`float4_e2m1x2_t`, `float4_e1m2x2_t`), validCol and indexCol are halved for byte addressing.
-    - ZN path: source and destination must both be `(isRowMajor, SFractal: ColMajor)`; uses `ComputeZNBlockParams` for fractal-block `copy_ubuf_to_cbuf`. ZN is the transpose-dual of NZ: rows are the fractal dimension and columns are the free dimension. `indexRow` and `validRow` must be aligned to the fractal row size (`BLOCK_BYTE_SIZE / sizeof(T)`); `indexCol` and `validCol` are unconstrained (free dimension), matching the NZ row dimension. For fp4 types (`float4_e2m1x2_t`, `float4_e1m2x2_t`), validRow and indexRow are halved for byte addressing.
+    - ND path: The source must be `isRowMajor`; use `copy_ubuf_to_cbuf`. The number of bytes per row must be aligned with `BLOCK_BYTE_SIZE` (32 bytes).
+    - NZ path: The source must be `(!isRowMajor, SFractal: RowMajor)`; use `ComputeNZBlockParams` for fractal block `copy_ubuf_to_cbuf`.
 
-- **NZ Split** (`TInsertMode::SPLIT2` / `TInsertMode::SPLIT4`, A5 only):
-    - Destination must be `TileType::Mat`; source must be `TileType::Vec`.
+- **NZ Split** (`TInsertMode::SPLIT2` / `TInsertMode::SPLIT4`, only Ascend 950PR/Ascend 950DT/Kirin9030/KirinX90):
+    - The target must be `TileType::Mat`; the source must be `TileType::Vec`.
     - `DstTileData::DType` must equal `SrcTileData::DType`.
-    - Source must be NZ format: `(!isRowMajor, SFractal: RowMajor)`.
+    - The source must be in NZ format: `(!isRowMajor, SFractal: RowMajor)`.
     - Supported element types: `half`, `bfloat16_t`, `float`, `int32_t`, `int8_t`, `hifloat8_t`, `float8_e4m3_t`, `float8_e5m2_t`, `float8_e8m0_t`, `float4_e2m1x2_t`, `float4_e1m2x2_t`.
-    - `validRow` is aligned up to `FRACTAL_NZ_ROW` (16) for burst calculation.
-    - Splits the `copy_ubuf_to_cbuf` total burst into 2 or 4 sub-transfers, each handling `totalBurstNum / SplitCount` column blocks (last sub-transfer takes the remainder).
+    - `validRow` is aligned to `FRACTAL_NZ_ROW` (16) for burst calculation.
+    - Split the total burst of `copy_ubuf_to_cbuf` into 2 or 4 sub-transfers, each handling `totalBurstNum / SplitCount` column blocks.
 
 ## Examples
 
-### Auto
+### Automatic
 
 ```cpp
 #include <pto/pto-inst.hpp>
 
 using namespace pto;
 
-// Vec -> Mat insertion (NZ layout)
+// Vec -> Mat insert (NZ layout).
 void example_auto() {
   using SrcT = Tile<TileType::Vec, half, 16, 32, BLayout::ColMajor, 16, 32, SLayout::RowMajor>;
   using DstT = Tile<TileType::Mat, half, 16, 32, BLayout::ColMajor, -1, -1, SLayout::RowMajor>;
@@ -255,7 +243,7 @@ void example_auto() {
 
 using namespace pto;
 
-// Vec -> Mat insertion (NZ layout, manual buffer assignment)
+// Vec -> Mat insert (NZ layout, manual buffer allocation).
 void example_manual() {
   using SrcT = Tile<TileType::Vec, half, 16, 32, BLayout::ColMajor, 16, 32, SLayout::RowMajor>;
   using DstT = Tile<TileType::Mat, half, 16, 32, BLayout::ColMajor, -1, -1, SLayout::RowMajor>;
@@ -267,7 +255,7 @@ void example_manual() {
 }
 ```
 
-Unit-flag L0C to L1 move-out (A2A3, Ascend 950PR/Ascend 950DT):
+L0C→L1 move-out with unit flag (Atlas A2/A3 training products/Atlas A2/A3 inference products, Ascend 950PR/Ascend 950DT):
 
 ```cpp
 #include <pto/pto-inst.hpp>
@@ -283,11 +271,11 @@ void example_unit_flag() {
   TASSIGN(b, 0x0);
   TASSIGN(c, 0x0);
   TASSIGN(l1, 0x2000);
-  // Move out once the data is ready; no explicit set_flag/wait_flag is needed between the two.
+  // Move out after data is ready: no explicit set_flag/wait_flag is required between the two instructions.
   TMATMUL<AccPhase::Final>(c, a, b);
   TINSERT<STPhase::Final>(l1, c, /*indexRow=*/0, /*indexCol=*/0);
 
-  // Draining one L0C tile more than once: Partial on the non-last move-outs, Final on the last.
+  // When the same L0C block is moved out in multiple passes, use Partial for non-final passes without releasing the unit flag, and use Final for the final pass to release it.
   // TINSERT<STPhase::Partial>(l1, c, /*indexRow=*/0, /*indexCol=*/0);
   // TINSERT<STPhase::Final>(l1, c, /*indexRow=*/0, /*indexCol=*/0);
 }

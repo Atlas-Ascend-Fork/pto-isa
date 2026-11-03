@@ -1,2 +1,2 @@
 # Row-Wise Broadcast
-<!-- md-trans-meta sourceCommit=unknown translatedAt=2026-08-26T05:30:37.883Z pushedAt=2026-08-29T09:05:18.478Z -->
+<!-- md-trans-meta sourceCommit=unknown translatedAt=2026-10-30T06:20:56.018Z pushedAt=2026-11-02T03:00:52.247Z nl=1 -->

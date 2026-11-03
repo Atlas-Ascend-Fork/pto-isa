@@ -1,23 +1,25 @@
 # TROWMIN
 
+<!-- md-trans-meta sourceCommit=unknown translatedAt=2026-10-30T05:55:37.354Z pushedAt=2026-11-02T03:00:52.229Z nl=2 -->
 
-## Tile Operation Diagram
+## Instruction Diagram
 
 ![TROWMIN tile operation](../figures/isa/TROWMIN.svg)
 
 ## Introduction
 
-Reduce each row by taking the minimum across columns.
+Reduces each row by taking the minimum value across columns.
 
-## Math Interpretation
+## Mathematical Semantics
 
-Let `R = src.GetValidRow()` and `C = src.GetValidCol()`. For `0 <= i < R`:
+Assume `R = src.GetValidRow()` and `C = src.GetValidCol()`. For `0 <= i < R`:
 
 $$ \mathrm{dst}_{i,0} = \min_{0 \le j < C} \mathrm{src}_{i,j} $$
 
-## C++ Intrinsic
+## C++ Built-in APIs
 
 Declared in `include/pto/common/pto_instr.hpp`:
+> The public include header is `<pto/pto-inst.hpp>`, and the internal declaration is located in `pto/common/pto_instr.hpp`.
 
 ```cpp
 template <typename TileDataOut, typename TileDataIn, typename TileDataTmp, typename... WaitEvents>
@@ -26,50 +28,50 @@ PTO_INST RecordEvent TROWMIN(TileDataOut &dst, TileDataIn &src, TileDataTmp &tmp
 
 ## Constraints
 
-### General constraints / checks
+### General Constraints or Checks
 
 - `dst` and `src` must both be `TileType::Vec`.
-- `src` must use standard ND layout: row-major and non-fractal (`BLayout::RowMajor`, `SLayout::NoneBox`).
-- `dst` must use one of the following non-fractal layouts:
+- `src` must use the standard ND layout: row-major and non-fractal (`BLayout::RowMajor`, `SLayout::NoneBox`).
+- `dst` must use one of the following two non-fractal layouts:
     - ND layout (`BLayout::RowMajor`, `SLayout::NoneBox`), or
-    - DN layout with exactly one column (`BLayout::ColMajor`, `SLayout::NoneBox`, `Cols == 1`).
-- `dst` and `src` must use the same element type.
-- Runtime valid-region checks:
+    - DN layout with the number of columns strictly equal to 1 (`BLayout::ColMajor`, `SLayout::NoneBox`, `Cols == 1`).
+- The element types of `dst` and `src` must be consistent.
+- Runtime valid region checks:
     - `src.GetValidRow() != 0`
     - `src.GetValidCol() != 0`
     - `src.GetValidRow() == dst.GetValidRow()`
-- The intrinsic signature requires an explicit `tmp` operand.
+- The built-in API signature requires explicitly passing the `tmp` operand.
 
-### A2A3 implementation checks
+### Implementation Check for Atlas A2/A3 Training Products/Atlas A2/A3 Inference Products
 
 - Supported element types: `half`, `float`, `int32_t`, `int16_t`.
 
-### A5 implementation checks
+### Ascend 950PR/Ascend 950DT Implementation Check
 
 - Supported element types: `half`, `float`, `int32_t`, `int64_t`, `uint64_t`, `int16_t`, `int8_t`, `uint8_t`.
 - For `int64_t` / `uint64_t`:
-    - Set the output valid column count to 1. Only column 0 of valid rows is written; other physical padding is preserved.
-    - ND output requires physical `Cols % 4 == 0`; DN output requires physical `Cols == 1` and `Rows % 4 == 0`. Valid rows need not be a multiple of 4.
-    - Row strides follow physical shapes; see [shape and layout conventions](conventions.md).
+    - The output valid column count should be 1; only column 0 of each valid row is written, and the remaining physical padding is preserved.
+    - ND output requires physical `Cols % 4 == 0`; DN output requires physical `Cols == 1` and `Rows % 4 == 0`. The valid row count does not need to be a multiple of 4.
+    - The row stride is determined by the physical shape. For details, see [Shape and Layout Conventions](conventions.md).
 
 ## Temporary Space
 
-### A2A3
+### Atlas A2/A3 Training Products/Atlas A2/A3 Inference Products
 
-`tmp` **is used** as scratch storage for row-wise min reduction.
+`tmp` **is used** as the scratch storage for row minimum value reduction.
 
-- For **integer** types (`int32_t`, `int16_t`): `tmp` is used as a per-row accumulator buffer (1 block). For each row, `tmp` is initialized to the maximum representable value, then blocks of `src` are accumulated via `vmin`. The final min is read from `tmp` in scalar mode.
+- For **integer** types (`int32_t`, `int16_t`): `tmp` is used as a row-wise accumulator buffer (1 block). For each row, `tmp` is initialized to the maximum representable value, and then the blocks of `src` are accumulated through `vmin`. The final minimum value is read from `tmp` in scalar mode.
   - `tmp` size: at least 1 row and `BLOCK_BYTE_SIZE / sizeof(T)` columns (8 for `int32_t`, 16 for `int16_t`).
-- For **floating-point** types (`float`, `half`): `tmp` is used for binary-tree reduction via `vcmin`/`vcgmin`.
-  - A safe default: set `tmp` to the same shape as `src`.
+- For **floating-point** types (`float`, `half`): `tmp` is used for binary tree reduction through `vcmin`/`vcgmin`.
+  - Safe default settings: set `tmp` to the same shape as `src`.
 
-### A5
+### Ascend 950PR/Ascend 950DT
 
-`tmp` is accepted but not used. The 64-bit integer path performs exact integer reduction without floating-point conversion.
+`tmp` is accepted by the API but not used. 64-bit integers use exact integer reduction without floating-point conversion.
 
 ## Examples
 
-### Auto
+### Automatic
 
 ```cpp
 #include <pto/pto-inst.hpp>
@@ -108,9 +110,9 @@ void example_manual() {
 }
 ```
 
-### 64-bit ND output (A5)
+### 64-Bit ND Output (Ascend 950PR/Ascend 950DT)
 
-The output has physical shape `[64,4]` and valid shape `[64,1]`, with one 8-byte result every 32 bytes.
+The output has a physical shape of `[64,4]` and a valid shape of `[64,1]`, writing one 8-byte result every 32 bytes.
 
 ```cpp
 #include <cstdint>

@@ -1,29 +1,28 @@
 # TPUT_ASYNC_NOTIFY
 
+<!-- md-trans-meta sourceCommit=unknown translatedAt=2026-10-30T04:12:55.987Z pushedAt=2026-11-02T03:00:52.144Z nl=2 -->
+
 ## Introduction
 
-`TPUT_ASYNC_NOTIFY` is an asynchronous remote write with notification. It transfers a non-empty payload from local
-GM to remote GM and then updates one remote 32-bit signal. The returned `AsyncEvent` represents completion of both
-the payload transfer and the signal update.
+`TPUT_ASYNC_NOTIFY` is an asynchronous remote write primitive with notification. It first transfers a non-empty payload from local GM to remote GM, and then updates a remote 32-bit signal. The returned `AsyncEvent` represents the completion status of both the payload transfer and the signal update.
 
 Data flow:
 
 `srcGlobalData (local GM)` → DMA engine → `dstGlobalData (remote GM)` → update `dstSignalData (remote GM)`
 
-The caller supplies remote addresses for both `dstGlobalData` and `dstSignalData`. Use `TNOTIFY` when only a signal
-update is required and no payload is transferred.
+Both `dstGlobalData` and `dstSignalData` are remote addresses passed in by the caller. When only the signal is updated without transferring a payload, use `TNOTIFY`.
 
-## Template Parameter
+## Template Parameters
 
 `engine` selects the DMA backend at compile time:
 
-| Engine | Platform restriction | Supported `NotifyOp` |
+| Engine | Platform Restriction | Supported `NotifyOp` |
 |---|---|---|
 | `DmaEngine::SDMA` (default) | A2/A3 and A5 | `Set`, `AtomicAdd` |
-| `DmaEngine::URMA` | Ascend950, NPU_ARCH 3510 only; requires CANN Toolkit >= 9.1.0 | `Set`, `AtomicAdd` |
-| `DmaEngine::RDMA` | Ascend950, NPU_ARCH 3510 only; currently supports HNS1825 RoCE | `Set` only |
+| `DmaEngine::URMA` | Ascend 950PR/Ascend 950DT, NPU_ARCH 3510 only; requires CANN Toolkit >= 9.1.0 | `Set`, `AtomicAdd` |
+| `DmaEngine::RDMA` | Ascend 950PR/Ascend 950DT, NPU_ARCH 3510 only; currently supports HNS1825 RoCE | `Set` only |
 
-## C++ Intrinsic
+## C++ Built-in APIs
 
 Declared in `include/pto/comm/pto_comm_inst.hpp`:
 
@@ -43,32 +42,28 @@ PTO_INST AsyncEvent TPUT_ASYNC_NOTIFY(GlobalDstData &dstGlobalData,
                                       WaitEvents &... events);
 ```
 
-For URMA and RDMA, `peer` selects the communication queue and remote-memory information for the target rank. Both
-`dstGlobalData` and `dstSignalData` must belong to that peer. SDMA does not use `peer`; its remote addresses come from
-the global tensors.
+For URMA and RDMA, `peer` is used to select the communication queue and remote memory information corresponding to the target rank, and both `dstGlobalData` and `dstSignalData` must belong to that peer. SDMA does not use `peer`; the remote address is determined by the GlobalTensor.
 
-`events` is a possibly empty parameter pack. Every event must provide a zero-argument `Wait()` method; the intrinsic
-waits for the events before starting the payload transfer. `AsyncEvent` provides `Wait(session)` instead of a
-zero-argument `Wait()`, so it cannot be passed as an `events` argument and must be waited explicitly with its session.
+`events` is a nullable variadic list. Each event must provide a parameterless `Wait()`; the interface waits for these events in sequence before initiating the payload transfer. The wait interface of `AsyncEvent` is `Wait(session)`, so it cannot be passed as the `events` parameter and should be explicitly waited on using the corresponding Session before the call.
 
 ## Parameters
 
 | Parameter | Description |
 |---|---|
-| `dstGlobalData` | Destination global tensor for the payload in remote GM. |
-| `srcGlobalData` | Source global tensor for the payload in local GM. |
-| `dstSignalData` | A 32-bit signal in remote GM. Its data type must be `int32_t`. |
-| `signalValue` | Value assigned by `Set`, or increment used by `AtomicAdd`. |
+| `dstGlobalData` | Destination GlobalTensor of the payload in remote GM. |
+| `srcGlobalData` | Source GlobalTensor of the payload in local GM. |
+| `dstSignalData` | 32-bit signal in remote GM; the data type must be `int32_t`. |
+| `signalValue` | Value written by `Set`, or the increment used by `AtomicAdd`. |
 | `notifyOp` | Signal update operation: `NotifyOp::Set` or `NotifyOp::AtomicAdd`. |
-| `session` | `AsyncSession` built for the `engine` template parameter. |
-| `peer` | Destination rank for URMA and RDMA; unused by SDMA. |
-| `events` | Zero or more prerequisite PTO pipeline events. |
+| `session` | `AsyncSession` built for the template parameter `engine`. |
+| `peer` | Target rank for URMA and RDMA; SDMA does not use this parameter. |
+| `events` | Zero or more preceding PTO pipe events. |
 
-The return value is an `AsyncEvent`. Its completion covers both the payload transfer and the following signal update.
+The return value is an `AsyncEvent`. The completion scope of this Event covers both the payload transfer and the subsequent signal update.
 
 ### Signal and `signalValue`
 
-`comm::Signal` is the global-tensor alias for one `int32_t` signal:
+`comm::Signal` is an alias of GlobalTensor corresponding to a single `int32_t` signal:
 
 ```cpp
 using Signal = GlobalTensor<int32_t,
@@ -77,48 +72,39 @@ using Signal = GlobalTensor<int32_t,
                             Layout::ND>;
 ```
 
-Constructing a `Signal` only wraps a caller-provided GM address; it does not allocate or initialize the underlying
-memory. The caller allocates the signal and initializes it according to the communication protocol. `Set` assigns
-`signalValue` to the signal. `AtomicAdd` uses `signalValue` as a signed increment.
+Constructing a `Signal` only wraps the GM address provided by the caller and does not allocate or initialize the underlying memory. The caller should allocate the signal in advance and set the initial value according to the communication protocol. `Set` updates the signal to `signalValue`; `AtomicAdd` treats `signalValue` as a signed increment.
 
 ## Operation Semantics
 
-One invocation executes in this order:
+A single call is executed in the following order:
 
 1. Wait for all `events`.
 2. Transfer the complete payload from `srcGlobalData` to `dstGlobalData`.
-3. After the payload transfer completes, update `dstSignalData` according to `notifyOp`.
+3. After the payload transfer is complete, update `dstSignalData` according to `notifyOp`.
 
-For `NotifyOp::Set`:
+The semantics of `NotifyOp::Set` are:
 
 $$
 \mathrm{signal}^{\mathrm{remote}} = \mathrm{signalValue}
 $$
 
-For `NotifyOp::AtomicAdd`:
+The semantics of `NotifyOp::AtomicAdd` are:
 
 $$
-\mathrm{signal}^{\mathrm{remote}} \mathrel{+}= \mathrm{signalValue} \quad (\text{atomic})
+\mathrm{signal}^{\mathrm{remote}} \mathrel{+}= \mathrm{signalValue} \quad (\text{ atomic operation})
 $$
 
-`AtomicAdd` updates the signal atomically. Multiple producers may update the same signal concurrently, and the final
-increment is the sum of their `signalValue` values. This atomicity does not apply to payload writes; concurrently
-transferred payloads from multiple producers must have non-overlapping destination ranges.
+The `AtomicAdd` update to the signal is atomic. Multiple producers can concurrently update the same signal, and the final increment is the sum of all `signalValue` values. This atomicity does not apply to payload writes; when multiple producers concurrently transfer payloads, the destination address ranges must not overlap.
 
-The intrinsic does not guarantee a final value when multiple producers concurrently apply `Set` to one signal.
-Without application-level synchronization, do not concurrently mix `Set`, `AtomicAdd`, or ordinary stores on the
-same signal.
+When multiple producers concurrently `Set` the same signal, the interface does not guarantee the final value. In the absence of application-level synchronization, `Set`, `AtomicAdd`, or ordinary store operations must not be concurrently mixed on the same signal.
 
-`DmaEngine::RDMA` does not support `NotifyOp::AtomicAdd`. The payload-before-signal order above applies only within
-one invocation and does not define ordering between different sessions or independent execution flows.
+`DmaEngine::RDMA` does not support `NotifyOp::AtomicAdd`. The above ordering of payload before signal applies only to the same invocation; the ordering between different Sessions or different execution streams is not defined.
 
 ## AsyncSession Construction
 
-Use `BuildAsyncSession` from `include/pto/comm/async_common/async_event_impl.hpp`. It provides an engine-specific
-construction interface for each backend. The function returns `false` when construction fails; only a successfully
-built session can be used for asynchronous intrinsics and event waits.
+Use `BuildAsyncSession` in `include/pto/comm/async_common/async_event_impl.hpp`. This function provides different build interfaces based on the engine. It returns `false` when the build fails; only a successfully built Session can be used for asynchronous instructions and Event waiting.
 
-### SDMA Construction (default)
+### SDMA Construction (Default)
 
 ```cpp
 template <DmaEngine engine = DmaEngine::SDMA, typename ScratchTile>
@@ -132,22 +118,18 @@ PTO_INTERNAL bool BuildAsyncSession(
     uint32_t channelGroupIdx = sdma::kAutoChannelGroupIdx);
 ```
 
-| Parameter | Default | Description |
+| Parameter | Default Value | Description |
 |---|---|---|
-| `scratchTile` | — | UB scratch tile for SDMA control metadata. |
-| `workspace` | — | GM pointer allocated by the host-side `SdmaWorkspaceManager`. |
-| `session` | — | Output `AsyncSession`. |
-| `syncId` | `0` | MTE3/MTE2 pipeline synchronization event ID in the range 0-7. |
-| `baseConfig` | `{kDefaultSdmaBlockBytes, 0, 1}` | SDMA block bytes, communication-block offset, and queue count. |
-| `channelGroupIdx` | `kAutoChannelGroupIdx` | SDMA channel-group index; defaults to `get_block_idx()`. |
+| `scratchTile` |: | UB scratch tile used for SDMA control metadata. |
+| `workspace` |: | GM pointer allocated by the host-side `SdmaWorkspaceManager`. |
+| `session` |: | Output `AsyncSession`. |
+| `syncId` | `0` | MTE3/MTE2 pipe synchronization event ID, ranging from 0 to 7. |
+| `baseConfig` | `{kDefaultSdmaBlockBytes, 0, 1}` | SDMA block bytes, communication block offset, and queue count. |
+| `channelGroupIdx` | `kAutoChannelGroupIdx` | SDMA channel group index; selected based on `get_block_idx()` by default. |
 
-On A2/A3, concurrent AIVs must build separate sessions and use distinct Channel Groups. The default
-`kAutoChannelGroupIdx` selects a group from `get_block_idx()`; callers that pass explicit groups must likewise give
-each concurrent AIV exclusive ownership of one group. `queue_num` may be greater than one, but one
-`TPUT_ASYNC_NOTIFY` call submits its payload and signal only through queue 0 of that group to preserve payload-before-
-signal ordering. Increasing `queue_num` does not stripe that notify payload across queues.
+On A2/A3, concurrent AIVs must build sessions separately and use different channel groups. The default `kAutoChannelGroupIdx` selects the group based on `get_block_idx()`; when the caller explicitly specifies a group, each concurrent AIV must also exclusively occupy one group. `queue_num` can be greater than 1, but the payload and signal of a single `TPUT_ASYNC_NOTIFY` use only queue 0 in that group to ensure payload precedes signal; increasing `queue_num` does not split this notify payload in parallel.
 
-### URMA Construction (NPU_ARCH 3510 only)
+### URMA Construction (NPU_ARCH 3510 Only)
 
 ```cpp
 #ifdef PTO_URMA_SUPPORTED
@@ -162,10 +144,9 @@ PTO_INTERNAL bool BuildAsyncSession(__gm__ uint8_t *workspace,
 | `workspace` | GM pointer allocated by the host-side `UrmaWorkspaceManager`. |
 | `session` | Output `AsyncSession`. |
 
-URMA does not require `scratchTile` and requires CANN Toolkit >= 9.1.0. The session does not bind a destination rank;
-the intrinsic selects it through `peer`.
+URMA does not require `scratchTile` and requires CANN Toolkit >= 9.1.0. The Session is not bound to a target rank; the target is specified by the `peer` parameter of the instruction.
 
-### RDMA Construction (NPU_ARCH 3510 only)
+### RDMA Construction (NPU_ARCH 3510 Only)
 
 ```cpp
 #ifdef PTO_RDMA_SUPPORTED
@@ -180,13 +161,13 @@ PTO_INTERNAL bool BuildAsyncSession(ScratchTile &scratchTile,
 
 | Parameter | Description |
 |---|---|
-| `scratchTile` | UB/Vec scratch tile used by RDMA; at least 64 bytes. |
-| `workspace` | GM pointer returned by the host-side RDMA initialization flow. |
-| `myPe` | Local rank ID. |
+| `scratchTile` | UB/Vec scratch tile used by RDMA, at least 64 bytes. |
+| `workspace` | GM pointer returned by the Host-side RDMA initialization process. |
+| `myPe` | Local rank id. |
 | `session` | Output `AsyncSession`. |
-| `syncId` | MTE/scalar synchronization event ID in the range 0-7. |
+| `syncId` | MTE/Scalar synchronization event ID, ranging from 0 to 7. |
 
-An RDMA session does not bind a destination peer. Select the target rank with the intrinsic's `peer` parameter:
+An RDMA session is not bound to a target peer. The target rank is selected through `peer` when the instruction is invoked:
 
 ```cpp
 comm::AsyncSession session;
@@ -201,73 +182,59 @@ if (comm::BuildAsyncSession<comm::DmaEngine::RDMA>(
 
 ### scratchTile
 
-`scratchTile` is temporary UB workspace used by SDMA and RDMA sessions; it does not contain the user payload. It must
-be a `pto::Tile` in UB/Vec memory and remain valid until the associated events have completed.
+`scratchTile` is a temporary UB workspace used by SDMA and RDMA sessions, and is not used to store user payload. It must be a `pto::Tile` in UB/Vec memory and remain valid until the related events complete.
 
-- SDMA requires at least 8 available bytes. A common type is
+- SDMA requires at least 8 bytes of available space. A commonly used type is
   `Tile<TileType::Vec, uint8_t, 1, comm::sdma::UB_ALIGN_SIZE>` (256 bytes).
-- RDMA requires at least 64 available bytes.
+- RDMA requires at least 64 bytes of available space.
 
 ## Constraints
 
-- `GlobalSrcData::RawDType` must equal `GlobalDstData::RawDType`.
-- `GlobalSrcData::layout` must equal `GlobalDstData::layout`.
-- Source and destination payload tensors must be flat, contiguous logical 1D tensors.
-- The destination element capacity must be at least the source element count.
-- The payload size must be greater than zero. Use `TNOTIFY` for a signal-only operation.
-- `dstSignalData` must contain exactly one `int32_t` in remote GM. Its address must be non-null and 4-byte aligned.
-  The caller is responsible for allocation and initialization.
-- The payload destination range must not overlap `dstSignalData`.
-- For URMA and RDMA, the payload destination and signal must belong to the same target peer. The complete local
-  payload, remote payload, and remote signal ranges must lie in memory regions registered during host initialization.
-- A URMA payload has no per-call size cap: a payload larger than 256 MB (the single-WQE transfer limit) is automatically split into multiple WQEs by the implementation, transparently to the caller, and the signal is still guaranteed to complete after all payload chunks. One RDMA payload must not exceed `0x7fffffff` bytes.
-- RDMA supports only `NotifyOp::Set`; do not use `NotifyOp::AtomicAdd`.
-- The SDMA workspace must be initialized by the host-side `SdmaWorkspaceManager`. The URMA workspace must be
-  initialized by the host-side `UrmaWorkspaceManager`.
-- The symmetric data buffer passed to `UrmaWorkspaceManager::Init()` must be device memory that HCCL can register;
-  its allocation method must satisfy the requirements of the active CANN/HCCL runtime.
-- Keep the session, workspace, and scratch tile alive until all associated events have completed.
+- `GlobalSrcData::RawDType` must be equal to `GlobalDstData::RawDType`.
+- `GlobalSrcData::layout` must be equal to `GlobalDstData::layout`.
+- The source and destination payload tensors must be flat, contiguous, logical one-dimensional tensors.
+- The element capacity of the destination tensor must not be less than the number of elements in the source tensor.
+- The payload size must be greater than 0. To update only the signal, use `TNOTIFY`.
+- `dstSignalData` must contain exactly one `int32_t` in remote GM, with a non-null address aligned to 4 bytes. The caller is responsible for allocation and initialization.
+- The payload destination address range must not overlap with `dstSignalData`.
+- For URMA and RDMA, the payload destination address and the signal must belong to the same target peer; the complete address range of the local payload, remote payload, and remote signal must be located within the memory region registered during the host initialization phase.
+- URMA payload has no single-transfer size limit: payloads exceeding 256 MB (the single WQE transfer limit) are automatically split into multiple WQEs by the implementation, transparent to the caller, and the signal is still guaranteed to complete last after all payload fragments. A single RDMA payload must not exceed `0x7fffffff` bytes.
+- RDMA supports only `NotifyOp::Set`; `NotifyOp::AtomicAdd` must not be used.
+- The SDMA workspace must be initialized by the host-side `SdmaWorkspaceManager`; the URMA workspace must be initialized by the host-side `UrmaWorkspaceManager`.
+- The symmetric data buffer passed to `UrmaWorkspaceManager::Init()` must be device memory that can be registered by HCCL; the allocation method follows the current CANN/HCCL runtime requirements for registered memory.
+- The lifetime of the session, workspace, and scratch tile must cover the completion phase of the related event.
 
 ## Completion Semantics
 
-- `event.Wait(session)` blocks until the event completes.
-- `event.Test(session)` tests completion without blocking.
-- Both methods must use the same session that issued the operation.
-- Successful completion covers the complete payload transfer and the following signal update.
+- `event.Wait(session)` blocks until the Event completes.
+- `event.Test(session)` non-blockingly checks whether the Event has completed.
+- Both APIs must use the same Session that initiated the operation.
+- Successful completion covers both the full payload transfer and the subsequent signal update.
 
-Asynchronous operations in one session and one backend queue complete in submission order. After several operations
-have been submitted, waiting for the last event in that queue also covers earlier outstanding operations. URMA or
-RDMA queues for different peers complete independently, so wait for the last event of each peer separately. `Wait`
-and `Test` do not require the peer argument again.
+Asynchronous operations in the same Session and the same backend queue complete in submission order. After submitting multiple operations consecutively, waiting on the Event of the last operation in that queue also covers any earlier operations that have not yet completed. When URMA or RDMA accesses different peers, the queue of each peer is independent, and the caller must wait on the last Event of each peer separately; there is no need to pass the peer again when calling `Wait` or `Test`.
 
-When the receiver observes the signal update, the corresponding payload has been transferred to remote GM. The
-intrinsic does not guarantee that an existing receiver-side payload cache entry has been updated. Before reading the
-payload, the caller must ensure visibility according to the target platform and runtime memory-consistency rules.
+When the receiver observes the signal update, the corresponding payload has already been transferred to the remote GM, but this API does not guarantee that the receiver's existing cached copy of the payload is updated synchronously. Before reading the payload, the caller is responsible for ensuring payload visibility according to the memory consistency rules of the target platform and runtime.
 
 ## Concurrency and Session Ownership
 
-- A2/A3 SDMA: AIVs using separate sessions and Channel Groups may concurrently access the same rank or different
-  ranks.
-- URMA: Different AIVs may concurrently access different peers; accesses to the same peer must be serialized.
-- Concurrent payload ranges must not overlap. Use `AtomicAdd` for a shared signal and separate signals for `Set`.
+- A2/A3 SDMA: When different AIVs use independent Sessions and Channel Groups, they can concurrently access the same rank or different ranks.
+- URMA: Different AIVs can run concurrently when accessing different peers; they must be serialized when accessing the same peer.
+- Concurrent payload ranges must not overlap; a shared signal should use `AtomicAdd`, and `Set` should use an independent signal.
 
-- Do not use one session concurrently from multiple execution flows.
-- For A2/A3 SDMA, every concurrent AIV must use a separate session and a distinct Channel Group. Multiple AIVs must
-  not submit concurrently to one group. With `queue_num == N`, at most `kSdmaMaxChannelGroups / N` groups are valid.
-- Concurrent `Set` producers should use separate remote signals. Use `AtomicAdd` when multiple AIVs share one signal
-  as a completion counter. Payload destination ranges must not overlap in either mode.
-- For URMA and RDMA, submissions to the same peer/QP must be serialized even when callers constructed separate
-  sessions over the same workspace. Different peers use independent queues.
-- Complete all earlier events before rebuilding a session or reusing its backend queue.
-- When using URMA, complete the last event for every active peer/QP and synchronize every host stream that uses the
-  `CommContext` before releasing communication resources. If an external HCCL communicator is supplied through
-  `existingComm`, also stop its other users and destroy the communicator to release its channels/MRs before calling
-  `DestroyComm`, `Reset`, rebuilding with `BuildComm`, or destroying the `CommContext`.
+- The same session cannot be used concurrently by multiple execution streams.
+- For A2/A3 SDMA, each concurrent AIV must use an independent Session and an independent Channel Group; multiple AIVs must not submit to the same
+  Group simultaneously. When `queue_num` is `N`, the maximum number of valid Groups is `kSdmaMaxChannelGroups / N`.
+- When multiple AIVs run `Set` concurrently, each producer should use an independent signal; when using the same signal for completion counting,
+  `AtomicAdd` should be used. In either mode, the payload destination address ranges of the AIVs must not overlap.
+- For URMA and RDMA, even if the caller builds different Sessions based on the same workspace, submissions to the same peer/QP must be serialized;
+  Different peers use independent queues.
+- Before rebuilding a Session or reusing backend queues, all previous Events must be completed.
+- When using URMA, before releasing communication resources, the last Event of each active peer/QP must be completed, and all host streams that use the
+  `CommContext` must be synchronized. If an external HCCL communicator is passed in through `existingComm`, you must also ensure that other users have stopped, destroy the communicator first to release Channel/MR, and then call `DestroyComm`, `Reset`, call `BuildComm` again, or destroy the `CommContext`.
 
 ## Examples
 
-The following examples assume that the host communication runtime has translated the remote addresses and initialized
-the workspace for the selected engine.
+The following example assumes that the Host communication runtime has completed remote address translation and initialized the workspace of the corresponding engine.
 
 ### SDMA Set
 
@@ -314,7 +281,7 @@ __global__ AICORE void PutAndNotifySdma(__gm__ T *remoteDst,
 
 ### SDMA AtomicAdd
 
-The SDMA `AtomicAdd` example uses the same session and tensor construction as the preceding example:
+The Session and tensor construction method for SDMA `AtomicAdd` is the same as in the previous example:
 
 ```cpp
 comm::AsyncSession session;
@@ -329,7 +296,7 @@ if (comm::BuildAsyncSession<comm::DmaEngine::SDMA>(
 
 ### URMA Set
 
-The URMA session does not bind a destination rank. The intrinsic selects the target through `peer`:
+A URMA Session is not bound to a target rank. When invoking the instruction, specify the target through `peer`:
 
 ```cpp
 comm::AsyncSession session;
@@ -344,7 +311,7 @@ if (comm::BuildAsyncSession<comm::DmaEngine::URMA>(
 
 ### URMA AtomicAdd
 
-URMA `AtomicAdd` uses the same session construction:
+URMA `AtomicAdd` uses the same Session construction method:
 
 ```cpp
 comm::AsyncSession session;
@@ -359,7 +326,7 @@ if (comm::BuildAsyncSession<comm::DmaEngine::URMA>(
 
 ### RDMA Set
 
-RDMA supports only `Set` and uses `peer` to select the target rank:
+RDMA supports only `Set` and selects the target rank through `peer`:
 
 ```cpp
 comm::AsyncSession session;
@@ -378,5 +345,5 @@ if (comm::BuildAsyncSession<comm::DmaEngine::RDMA>(
 comm::Signal ready(localSignalPtr);
 comm::TWAIT(ready, 1, comm::WaitCmp::EQ);
 
-// Ensure payload visibility according to the target platform and runtime rules before reading it.
+// Read the payload after ensuring its visibility according to the memory consistency rules of the target platform and runtime.
 ```

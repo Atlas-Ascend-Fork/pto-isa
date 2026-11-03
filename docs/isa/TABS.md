@@ -1,23 +1,25 @@
 # TABS
 
+<!-- md-trans-meta sourceCommit=unknown translatedAt=2026-10-30T04:24:34.586Z pushedAt=2026-11-02T03:00:52.153Z nl=2 -->
 
-## Tile Operation Diagram
+## Instruction Diagram
 
 ![TABS tile operation](../figures/isa/TABS.svg)
 
 ## Introduction
 
-Elementwise absolute value of a tile.
+Element-wise absolute value of a tile.
 
-## Math Interpretation
+## Mathematical Semantics
 
 For each element `(i, j)` in the valid region:
 
 $$ \mathrm{dst}_{i,j} = \left|\mathrm{src}_{i,j}\right| $$
 
-## C++ Intrinsic
+## C++ Built-in APIs
 
 Declared in `include/pto/common/pto_instr.hpp`:
+> The public include header is `<pto/pto-inst.hpp>`, and the internal declaration is located in `pto/common/pto_instr.hpp`.
 
 ```cpp
 template <typename TileDataDst, typename TileDataSrc, typename... WaitEvents>
@@ -26,30 +28,26 @@ PTO_INST RecordEvent TABS(TileDataDst &dst, TileDataSrc &src, WaitEvents &... ev
 
 ## Constraints
 
-- **Implementation checks (CPU sim)**:
-    - The dtypes of `dst` and `src` must be identical and one of: `int32_t`, `int`, `int16_t`, `int8_t`, `half`,
-      `bfloat16_t`, `float`.
-    - Runtime: `src.GetValidRow() == dst.GetValidRow()` and `src.GetValidCol() == dst.GetValidCol()`; a mismatch
-      triggers an assertion failure.
-    - The implementation iterates over `dst.GetValidRow()` / `dst.GetValidCol()`.
-- **Implementation checks (Costmodel)**:
-    - `TileData::DType` must be one of: `int32_t`, `int16_t`, `int8_t`, `uint8_t`, `half`, `float`.
-- **Implementation checks (NPU)**:
-    - For A3, `TileData::DType` must be one of: `float` or `half`;
-    - For A5, `TileData::DType` must be one of: `float`, `half`, `int32_t`, `int16_t`, `int8_t`, `int64_t`;
-    - Tile location must be vector (`TileData::Loc == TileType::Vec`);
-    - Static valid bounds: `TileData::ValidRow <= TileData::Rows` and `TileData::ValidCol <= TileData::Cols`;
-    - Runtime: `src.GetValidRow() == dst.GetValidRow()` and `src.GetValidCol() == dst.GetValidCol()`;
-    - Tile layout must be row-major (`TileData::isRowMajor`).
+- **Implementation check (CPU sim)**:
+    - The data types of `dst` and `src` must be the same, and must be one of the following: `int32_t`, `int`, `int16_t`, `half`, `float`.
+    - Runtime: `src.GetValidRow() == dst.GetValidRow()` and `src.GetValidCol() == dst.GetValidCol()`. If they are inconsistent, an assertion is triggered.
+    - The implementation iterates over `dst.GetValidRow()`/`dst.GetValidCol()`.
+- **Implementation check (Costmodel)**:
+    - `TileData::DType` must be one of the following: `int32_t`, `int16_t`, `int8_t`, `uint8_t`, `half`, `float`.
+- **Implementation check (NPU)**:
+    - For Atlas A3 training products/Atlas A3 inference products, `TileData::DType` must be one of the following: `float` or `half`.
+    - For Ascend 950PR/Ascend 950DT, `TileData::DType` must be one of the following: `int32_t`, `int16_t`, `int8_t`, `int64_t`, `half`, `float`.
+    - The tile position must be a vector (`TileData::Loc == TileType::Vec`).
+    - Static valid boundary: `TileData::ValidRow <= TileData::Rows` and `TileData::ValidCol <= TileData::Cols`.
+    - Runtime: `src.GetValidRow() == dst.GetValidRow()` and `src.GetValidCol() == dst.GetValidCol()`.
+    - The tile layout must be row-major (`TileData::isRowMajor`).
 - **Valid region**:
-    - The op uses `dst.GetValidRow()` / `dst.GetValidCol()` as the iteration domain.
-    - `dst` and `src` may have distinct C++ Tile types, including different static or dynamic `ValidRow`/`ValidCol`
-      template arguments, provided that their element types are identical. CPU_SIM computes each operand's address
-      from that operand's own Tile layout and physical shape.
+    - The operation uses `dst.GetValidRow()`/`dst.GetValidCol()` as the iteration domain.
+    - Provided that the element types are the same, `dst` and `src` can use different C++ Tile types, including mixing static and dynamic `ValidRow`/`ValidCol` template parameters. CPU_SIM computes addresses based on each operand's own Tile layout and physical shape.
 
 ## Examples
 
-### Auto
+### Automatic
 
 ```cpp
 #include <pto/pto-inst.hpp>
@@ -63,7 +61,7 @@ void example_auto() {
 }
 ```
 
-### Auto (mixed static and dynamic valid shapes)
+### Automatic (Mixed Static and Dynamic Valid Shapes)
 
 ```cpp
 #include <pto/pto-inst.hpp>

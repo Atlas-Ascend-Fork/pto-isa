@@ -1,2 +1,2 @@
 # Synchronous Communication
-<!-- md-trans-meta sourceCommit=unknown translatedAt=2026-08-26T05:34:35.909Z pushedAt=2026-08-29T09:05:18.486Z -->
+<!-- md-trans-meta sourceCommit=unknown translatedAt=2026-10-30T06:26:30.266Z pushedAt=2026-11-02T03:00:52.263Z nl=1 -->

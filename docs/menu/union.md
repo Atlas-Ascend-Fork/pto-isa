@@ -1,2 +1,2 @@
 # Union Computation
-<!-- md-trans-meta sourceCommit=unknown translatedAt=2026-08-26T05:35:33.278Z pushedAt=2026-08-29T09:05:18.488Z -->
+<!-- md-trans-meta sourceCommit=unknown translatedAt=2026-10-30T06:27:22.017Z pushedAt=2026-11-02T03:00:52.267Z nl=1 -->

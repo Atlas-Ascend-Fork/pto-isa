@@ -1,22 +1,24 @@
 # TGEMV_ACC
 
+<!-- md-trans-meta sourceCommit=unknown translatedAt=2026-10-30T05:02:28.254Z pushedAt=2026-11-02T03:00:52.185Z nl=2 -->
 
-## Tile Operation Diagram
+## Instruction Diagram
 
 ![TGEMV_ACC tile operation](../figures/isa/TGEMV_ACC.svg)
 
 ## Introduction
 
-Tile-based GEMV with explicit accumulator input tile (`cInMatrix`) and output tile (`cOutMatrix`).
+GEMV with an explicit accumulator input tile (`cInMatrix`) and output tile (`cOutMatrix`).
 
-## See also
+## See Also
 
-- Base GEMV instruction: `docs/isa/TGEMV.md`.
+- Basic GEMV instruction: `docs/isa/TGEMV.md`.
 - Bias variant: `docs/isa/TGEMV_BIAS.md`.
 
-## C++ Intrinsic
+## C++ Built-in APIs
 
 Declared in `include/pto/common/pto_instr.hpp`:
+> The public include header is `<pto/pto-inst.hpp>`, and the internal declaration is located in `pto/common/pto_instr.hpp`.
 
 ```cpp
 template <typename TileRes, typename TileLeft, typename TileRight, typename... WaitEvents>
@@ -26,58 +28,58 @@ template <AccPhase Phase, typename TileRes, typename TileLeft, typename TileRigh
 PTO_INST RecordEvent TGEMV_ACC(TileRes &cOutMatrix, TileRes &cInMatrix, TileLeft &aMatrix, TileRight &bMatrix, WaitEvents &... events);
 ```
 
-## Math Interpretation
+## Mathematical Semantics
 
-Let:
+Assume:
 
 - `M = 1`
 - `K = bMatrix.GetValidRow()`
 - `N = bMatrix.GetValidCol()`
 
-For `0 <= j < N` (accumulates into the existing output tile):
+For `0 <= j < N` (accumulate into the existing output tile):
 
 $$ \mathrm{C}_{0,j} \gets \mathrm{C}_{0,j} + \sum_{k=0}^{K-1} \mathrm{A}_{0,k} \cdot \mathrm{B}_{k,j} $$
 
-The existing `C` element is the initial accumulator value for the fused multiply-accumulate sequence. It is not added after computing an independent dot product from zero; this distinction can affect floating-point rounding across K tiles. Datatype promotion remains target/implementation-defined.
+The existing `C` element is the initial accumulation value of the fused multiply-add sequence, rather than first computing the dot product independently from zero and then adding `C` at the end; when accumulating across K tiles, the two orders may produce different floating-point rounding results. Data type promotion is still target/implementation-defined.
 
 ## Constraints
 
-### Common shape and location constraints
+### General Shape and Position Constraints
 
 - Static shape constraints:
     - `TileLeft::Rows == TileRes::Rows`
     - `TileLeft::Cols == TileRight::Rows`
     - `TileRight::Cols == TileRes::Cols`
-- Tile locations:
+- Tile position constraints:
     - `TileLeft::Loc == Left`
     - `TileRight::Loc == Right`
     - `TileRes::Loc == Acc`
-- Runtime valid-size constraints:
+- Runtime valid size constraints:
     - `m` must be `1`
-    - `k` and `n` (taken from `bMatrix.GetValidRow()` and `bMatrix.GetValidCol()`) must be in `[1, 4095]`
-- The `TMATMUL` accumulator pitch constraint also applies.
+    - `k` and `n` (obtained from `bMatrix.GetValidRow()` and `bMatrix.GetValidCol()`) must be within `[1, 4095]`
+- The Acc stride constraints of `TMATMUL` also apply.
 
-### Datatype constraints
+### Data Type Constraints
 
-- **Implementation checks (A2A3)**:
+- **Implementation check (Atlas A2/A3 training products/Atlas A2/A3 inference products)**:
     - Supported `(CType, AType, BType)` triples:
         - `(int32_t, int8_t, int8_t)`
         - `(float, half, half)`
         - `(float, float, float)`
         - `(float, bfloat16_t, bfloat16_t)`
-- **Implementation checks (A5)**:
-    - Accumulator type must be `int32_t` or `float`.
-    - If `int32_t`: `AType == int8_t` and `BType == int8_t`.
-    - If `float`: supports `half`, `bfloat16_t`, `float`, selected fp8 pairs, and `hifloat8_t/hifloat8_t` (target-defined).
-    - Fractal/layout constraints are enforced:
+- **Implementation check (Ascend 950PR/Ascend 950DT)**:
+    - The accumulator type must be `int32_t` or `float`.
+    - If it is `int32_t`: `AType == int8_t` and `BType == int8_t`.
+    - If it is `float`: supports `half`, `bfloat16_t`, `float`, selected fp8 combinations, and `hifloat8_t/hifloat8_t` (target-defined).
+    - The following fractal/layout constraints are enforced:
         - Left: `Loc == Left`, `!isRowMajor`, `SFractal == RowMajor`
         - Right: `Loc == Right`, `isRowMajor`, `SFractal == ColMajor`
         - Acc: `Loc == Acc`, `!isRowMajor`, `SFractal == RowMajor`
-    - No separate explicit `m/k/n` runtime assertions are enforced in the underlying A5 matmul implementation beyond the GEMV contract described above.
+    - In addition to the GEMV conventions above, the underlying Ascend 950PR/Ascend 950DT matmul implementation does not add a separate set of explicit `m/k/n` runtime assertions.
 
 ## Examples
 
-### Auto
+### Automatic
 
 ```cpp
 #include <pto/pto-inst.hpp>

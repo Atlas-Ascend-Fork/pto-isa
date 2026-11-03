@@ -1,15 +1,16 @@
 # TSEL
 
+<!-- md-trans-meta sourceCommit=unknown translatedAt=2026-10-30T06:01:28.575Z pushedAt=2026-11-02T03:00:52.232Z nl=2 -->
 
-## Tile Operation Diagram
+## Instruction Diagram
 
 ![TSEL tile operation](../figures/isa/TSEL.svg)
 
 ## Introduction
 
-Select between two tiles using a mask tile (per-element selection).
+Selects between two tiles using a mask tile (element-wise selection).
 
-## Math Interpretation
+## Mathematical Semantics
 
 For each element `(i, j)` in the valid region:
 
@@ -21,9 +22,10 @@ $$
 \end{cases}
 $$
 
-## C++ Intrinsic
+## C++ Built-in APIs
 
 Declared in `include/pto/common/pto_instr.hpp`:
+> The public include header is `<pto/pto-inst.hpp>`, and the internal declaration is located in `pto/common/pto_instr.hpp`.
 
 ```cpp
 template <typename TileData, typename MaskTile, typename TmpTile, typename... WaitEvents>
@@ -32,40 +34,40 @@ PTO_INST RecordEvent TSEL(TileData &dst, MaskTile &selMask, TileData &src0, Tile
 
 ## Constraints
 
-- **Implementation checks (A2A3)**:
+- **Implementation check (Atlas A2/A3 training products/Atlas A2/A3 inference products)**:
     - `sizeof(TileData::DType)` must be `2` or `4` bytes.
-    - `TileData::DType` must be `int16_t` or `uint16_t` or `int32_t` or `uint32_t` or `half` or `bfloat16_t` or `float`.
+    - `TileData::DType` must be `int16_t`, `uint16_t`, `int32_t`, `uint32_t`, `half`, `bfloat16_t`, or `float`.
     - `dst`, `src0`, and `src1` must use the same element type.
     - `dst`, `src0`, and `src1` must be row-major.
-    - The selection domain is `dst.GetValidRow()` / `dst.GetValidCol()`.
-- **Implementation checks (A5)**:
+    - The selection domain is determined by `dst.GetValidRow()`/`dst.GetValidCol()`.
+- **Implementation check (Ascend 950PR/Ascend 950DT)**:
     - `sizeof(TileData::DType)` must be `1`, `2`, `4`, or `8` bytes.
-    - `TileData::DType` must be `int8_t` or `uint8_t` or `int16_t` or `uint16_t` or `int32_t` or `uint32_t` or `int64_t` or `uint64_t` or `half` or `bfloat16_t` or `float`.
+    - `TileData::DType` must be `int8_t`, `uint8_t`, `int16_t`, `uint16_t`, `int32_t`, `uint32_t`, `int64_t`, `uint64_t`, `half`, `bfloat16_t`, or `float`.
     - `dst`, `src0`, and `src1` must use the same element type.
     - `dst`, `src0`, and `src1` must be row-major.
-    - The selection domain is `dst.GetValidRow()` / `dst.GetValidCol()`.
+    - The selection domain is determined by `dst.GetValidRow()`/`dst.GetValidCol()`.
 - **Mask encoding**:
-    - For 64-bit data (A5), use a RowMajor packed mask with one bit per element. Column `j` uses bit `j % 8` of byte `j / 8`; rows use the physical mask stride in bytes.
-    - Masks from [TCMP](TCMP.md) or [TCMPS](TCMPS.md) may be used directly. Mask capacity must cover the destination valid region; data-tile valid columns are still counted in data elements.
-    - The mask tile is interpreted as packed predicate bits in a target-defined layout.
+    - 64-bit data (Ascend 950PR/Ascend 950DT): uses a RowMajor packed mask, where each element corresponds to one bit; column `j` uses bit `j % 8` of byte `j / 8`, and the row address is calculated based on the mask physical byte stride.
+    - The mask produced by [TCMP](TCMP.md) or [TCMPS](TCMPS.md) can be used directly. The mask capacity must cover the destination valid region; the valid column count of the data tile is still counted by data elements.
+    - The mask tile is interpreted as packed predicate bits in the destination-defined layout.
 
 ## Temporary Space
 
-### A2A3
+### Atlas A2/A3 Training Products/Atlas A2/A3 Inference Products
 
-`tmp` **is used** as a small buffer to hold the comparison mask (`cmpmask`) copied from the mask tile for each row. The A2A3 implementation uses `set_cmpmask` which requires the mask data to be in a specific UB location.
+`tmp` **is used** as a small buffer to hold the comparison mask (`cmpmask`) copied from the mask tile to each row. The implementation of Atlas A2/A3 training products/Atlas A2/A3 inference products uses `set_cmpmask`, which requires the mask data to be located at a specific UB position.
 
-- `tmp` element type must be `uint32_t`.
-- `tmp` size requirement: at least `cmpmaskLen` `uint32_t` elements per row, where `cmpmaskLen = 4` for 16-bit data types (`half`, `bfloat16_t`) — 16 bytes (128 bits), and `cmpmaskLen = 2` for 32-bit data types (`float`, `int32_t`, `uint32_t`) — 8 bytes (64 bits).
-- A typical `tmp` tile declaration: `Tile<TileType::Vec, uint32_t, 1, 16>` suffices for most use cases.
+- The element type of `tmp` must be `uint32_t`.
+- `tmp` size requirement: at least `cmpmaskLen` `uint32_t` elements per row, where `cmpmaskLen = 4` (16 bytes, 128 bits) for 16-bit data types (`half`, `bfloat16_t`), and `cmpmaskLen = 2` (8 bytes, 64 bits) for 32-bit data types (`float`, `int32_t`, `uint32_t`).
+- Typical `tmp` tile declaration: `Tile<TileType::Vec, uint32_t, 1, 16>` satisfies most usage scenarios.
 
-### A5
+### Ascend 950PR/Ascend 950DT
 
-`tmp` is accepted by the interface but **not used** by the A5 implementation. The A5 backend uses vector register-based mask operations (`plds`, `vsel`) and does not require scratch tile storage. `tmp` is retained in the C++ intrinsic signature solely for API compatibility with A2A3.
+`tmp` is accepted by the API but **not used** by the Ascend 950PR/Ascend 950DT implementation. The Ascend 950PR/Ascend 950DT backend uses vector-register-based mask operations (`plds`, `vsel`) and does not require temporary tile storage. `tmp` is retained in the C++ built-in API signature only for API compatibility with Atlas A2/A3 training products/Atlas A2/A3 inference products.
 
 ## Examples
 
-### Auto
+### Automatic
 
 ```cpp
 #include <pto/pto-inst.hpp>

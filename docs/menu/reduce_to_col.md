@@ -1,2 +1,2 @@
 # Reduction to One Column
-<!-- md-trans-meta sourceCommit=unknown translatedAt=2026-08-26T05:33:08.709Z pushedAt=2026-08-29T09:05:18.483Z -->
+<!-- md-trans-meta sourceCommit=unknown translatedAt=2026-10-30T06:24:55.049Z pushedAt=2026-11-02T03:00:52.259Z nl=1 -->

@@ -1,36 +1,39 @@
 # TCONCAT
 
+<!-- md-trans-meta sourceCommit=unknown translatedAt=2026-10-30T04:49:20.451Z pushedAt=2026-11-02T03:00:52.174Z nl=2 -->
+
 ## Tile Operation Diagram
 
-### Basic Form (3 arguments)
+### Basic Form (3 Parameters)
 
 ![TCONCAT basic form](../figures/isa/TCONCAT.svg)
 
-### Indexed Form (5-6 arguments)
+### Indexed Form (5-6 Parameters)
 
 ![TCONCAT indexed form](../figures/isa/TCONCAT_idx.svg)
 
 ## Introduction
 
-Concatenate two source tiles (`src0` and `src1`) horizontally into a destination tile (`dst`) along the column dimension. Each row of `dst` contains the concatenation of corresponding rows from `src0` and `src1`.
+Concatenates two source tiles (`src0` and `src1`) into the destination tile (`dst`) horizontally along the column dimension. Each row of `dst` contains the concatenated result of the corresponding rows from `src0` and `src1`.
 
-`TCONCAT` is used for:
+`TCONCAT` is used to:
 
-- Concatenating two tiles along the column axis (horizontal concatenation)
-- Joining tiles in attention and transformer architectures (e.g., concatenating KV cache entries)
-- Combining partial results from split operations
+- Concatenate two tiles along the column axis (horizontal concatenation).
+- Concatenate tiles in attention and transformer architectures (for example, concatenating KV cache entries).
+- Merge partial results from split operations.
 
-## Math Interpretation
+## Mathematical Semantics
 
 For each row `i` in the valid region:
 
-$$ \mathrm{dst}_{i, j} = \begin{cases} \mathrm{src0}_{i, j} & \text{if } 0 \le j < \mathrm{validCols0} \\ \mathrm{src1}_{i, j - \mathrm{validCols0}} & \text{if } \mathrm{validCols0} \le j < \mathrm{validCols0} + \mathrm{validCols1} \end{cases} $$
+$ \mathrm{dst}_{i, j} = \begin{cases} \mathrm{src0}_{i, j} & \text{if } 0 \le j < \mathrm{validCols0} \\ \mathrm{src1}_{i, j - \mathrm{validCols0}} & \text{if } \mathrm{validCols0} \le j < \mathrm{validCols0} + \mathrm{validCols1} \end{cases} $
 
 Where `validCols0 = src0.GetValidCol()` and `validCols1 = src1.GetValidCol()`.
 
-## C++ Intrinsic
+## C++ Built-in APIs
 
 Declared in `include/pto/common/pto_instr.hpp`:
+> The public include header is `<pto/pto-inst.hpp>`, and the internal declaration is located in `pto/common/pto_instr.hpp`.
 
 ```cpp
 template <typename TileDst, typename TileSrc0, typename TileSrc1, typename... WaitEvents>
@@ -45,48 +48,48 @@ PTO_INST RecordEvent TCONCAT(TileDst &dst, TileSrc0 &src0, TileSrc1 &src1, TileD
 
 ## Constraints
 
-### General constraints / checks
+### General Constraints/Checks
 
 - `TCONCAT` has three overload variants:
-    - basic form: `TCONCAT(dst, src0, src1)` - concatenates full valid regions
-    - indexed form (5 args): `TCONCAT(dst, src0, src1, src0Idx, src1Idx)` - uses per-row index tiles to specify dynamic byte counts
-    - indexed form (6 args): `TCONCAT(dst, src0, src1, dstIdx, src0Idx, src1Idx)` - also outputs the concatenated byte count per row
-- All tiles must have `TileType::Vec` (vector tiles)
-- All tiles must use row-major layout (`isRowMajor == true`)
+    - Basic form: `TCONCAT(dst, src0, src1)` - concatenates the complete valid regions
+    - Indexed form (5 parameters): `TCONCAT(dst, src0, src1, src0Idx, src1Idx)` - uses per-row index tiles to specify dynamic byte counts
+    - Indexed form (6 parameters): `TCONCAT(dst, src0, src1, dstIdx, src0Idx, src1Idx)` - also outputs the concatenated byte count of each row
+- All tiles must be `TileType::Vec` (vector tiles).
+- All tiles must use row-major layout (`isRowMajor == true`).
 
-### Shape constraints
+### Shape Constraints
 
 - Basic form:
     - `dst.GetValidRow() == src0.GetValidRow() == src1.GetValidRow()`
-    - A2A3: `src0.GetValidCol() + src1.GetValidCol() <= TileDataDst::Cols` (total columns must not exceed dst physical capacity)
-    - A5: `dst.GetValidCol() == src0.GetValidCol() + src1.GetValidCol()` (total columns must equal dst valid columns)
+    - Atlas A2/A3 training products/Atlas A2/A3 inference products: `src0.GetValidCol() + src1.GetValidCol() <= TileDataDst::Cols` (the total number of columns must not exceed the physical capacity of dst)
+    - Ascend 950PR/Ascend 950DT: `dst.GetValidCol() == src0.GetValidCol() + src1.GetValidCol()` (the total number of columns must equal the valid column count of dst)
 - Indexed form:
-    - Same row count constraints as basic form
-    - For each row, the first index element is a byte count. The implementation divides it by the index element size to obtain the source column count, then clips the concatenated result to `dst.GetValidCol()`.
-    - `dstIdx.GetValidCol() == 1` for the 6-argument form. Each output element stores the clipped concatenated column count in bytes.
+    - The row count constraint is the same as the basic form.
+    - The first element of each per-row index tile represents the byte count. The implementation divides it by the index element size to obtain the source column count, and clips the concatenation result to `dst.GetValidCol()`.
+    - The 6-parameter form requires `dstIdx.GetValidCol() == 1`; each output element stores the byte count corresponding to the clipped concatenated column count.
 
-### A2/A3 indexed-form implementation behavior
+### Atlas A2/A3 Indexed Form Implementation Behavior
 
-- Full vector repeats and the remaining masked tail are copied separately.
-- When a source count is smaller than one vector repeat, the row is copied entirely by the masked-tail path.
-- A full-repeat `vcopy` is issued only when its repeat count is greater than zero; a zero full-repeat count is skipped.
+- The complete vector repeat and the remaining masked tail are copied separately.
+- When the source data volume is insufficient for one vector repeat, the entire row is copied through the masked tail path.
+- The `vcopy` of the complete repeat is performed only when the repeat count is greater than 0; when the complete repeat count is 0, this copy is skipped.
 
-### Data type constraints
+### Data Type Constraints
 
 - Supported element types: `int8_t`, `uint8_t`, `int16_t`, `uint16_t`, `int32_t`, `uint32_t`, `half`, `bfloat16_t`, `float`
-- Source and destination tiles must have identical element type
-- Index tiles must use integer types (`int8_t`, `uint8_t`, `int16_t`, `uint16_t`, `int32_t`, `uint32_t`)
+- The source tile and destination tile must have the same element type.
+- The index tile must use an integer type (`int8_t`, `uint8_t`, `int16_t`, `uint16_t`, `int32_t`, `uint32_t`).
 
-### A5 implementation checks
+### Ascend 950PR/Ascend 950DT Implementation Check
 
-- All tiles must be `TileType::Vec`
-- All tiles must be row-major layout
-- `validRows` must not exceed the physical tile rows for any operand
-- Index tiles (if provided) must satisfy type compatibility checks
+- All tiles must be `TileType::Vec`.
+- All tiles must use row-major layout.
+- `validRows` must not exceed the physical tile row count of any operand.
+- The index tile (if provided) must satisfy the type compatibility check.
 
 ## Examples
 
-### Auto Mode
+### Automatic Mode
 
 ```cpp
 #include <pto/pto-inst.hpp>
@@ -147,6 +150,6 @@ void example_indexed() {
 
 ## Related Instructions
 
-- [TINSERT](TINSERT.md) - Insert a sub-tile into a destination tile at specified offset
-- [TEXTRACT](TEXTRACT.md) - Extract a sub-tile from a source tile
-- [TRESHAPE](TRESHAPE.md) - Reinterpret a tile as another tile type/shape
+- [TINSERT](TINSERT.md) - Inserts a sub-tile into the destination tile at the specified offset.
+- [TEXTRACT](TEXTRACT.md) - Extracts a sub-tile from the source tile.
+- [TRESHAPE](TRESHAPE.md) - Reinterprets a tile as another tile type/shape.

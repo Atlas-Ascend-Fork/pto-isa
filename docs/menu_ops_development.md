@@ -2,6 +2,22 @@
 
 <!-- md-trans-meta sourceCommit=unknown translatedAt=2026-08-26T05:36:15.526Z pushedAt=2026-08-29T09:05:18.489Z -->
 
+- [Overview](menu/overview.md)
+
+  - [PTO Virtual Instruction Set Programming Model & Machine Model](menu/programming_model.md)
+
+    - [PTO Machine Model](en/programming_model/machine_model.md)
+
+    - [PTO Execution Model](en/programming_model/execution_model.md)
+
+    - [Tile and Tensor View](en/programming_model/tile_and_tensor_view.md)
+
+    - [CV Pipe](en/programming_model/cv_pipe.md)
+
+  - [C++ API and IR API Differences](menu/interface_comparison.md)
+
+- [PTO Virtual Instruction Set (C++)](menu/pto_isa_cpp.md)
+
 - [Header Files and Library Files](menu/header_and_library.md)
 
   - [Header Files and Library Files](PTO-ISA-Header-and-Library-Description.md)
@@ -321,3 +337,43 @@
     - [TPUT_ASYNC_NOTIFY](isa/comm/TPUT_ASYNC_NOTIFY.md)
 
     - [TGET_ASYNC](isa/comm/TGET_ASYNC.md)
+
+- [PTO Virtual Instruction Set (IR)](menu/pto_isa_ir.md)
+
+  - [Resource Binding Operations](en/ir/resource_binding_ops.md)
+
+  - [Pointer and View Operations](en/ir/pointer_and_view_ops.md)
+
+  - [Data Movement Operations](en/ir/data_movement_ops.md)
+
+  - [Matrix Computation Operations](en/ir/matrix_compute_ops.md)
+
+  - [Element-Wise Binary Operation](en/ir/elementwise_binary_ops.md)
+
+  - [Element-Wise Unary Operation](en/ir/elementwise_unary_ops.md)
+
+  - [Element-Wise Arithmetic and Transcendental Functions](en/ir/elementwise_transcendental_ops.md)
+
+  - [Tile-Scalar/Tile-Immediate Operations](en/ir/tile_scalar_immediate_ops.md)
+
+  - [Reduction Operations](en/ir/reduction_ops.md)
+
+  - [Broadcast Operations](en/ir/broadcast_ops.md)
+
+  - [Complex Transform Computation](menu/complex_transform.md)
+
+    - [Initialization](en/ir/complex_init_ops.md)
+
+    - [Data Type Conversion](en/ir/complex_cast_ops.md)
+
+    - [Layout Transformation](en/ir/complex_layout_ops.md)
+
+    - [Sort](en/ir/complex_sort_ops.md)
+
+    - [Union Computation](en/ir/complex_union_ops.md)
+
+  - [System and Control](menu/system_control.md)
+
+    - [Runtime and Debug Operations](en/ir/runtime_and_debug_ops.md)
+
+    - [Intra-Core CV Pipe Communication Operations](en/ir/cv_pipe_ops.md)

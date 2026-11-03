@@ -1,23 +1,25 @@
 # TCOLPROD
 
+<!-- md-trans-meta sourceCommit=unknown translatedAt=2026-10-30T04:48:12.836Z pushedAt=2026-11-02T03:00:52.172Z nl=2 -->
 
-## Tile Operation Diagram
+## Instruction Diagram
 
 ![TCOLPROD tile operation](../figures/isa/TCOLPROD.svg)
 
 ## Introduction
 
-Reduce each column by multiplying across rows.
+Reduces each column by multiplying across rows.
 
-## Math Interpretation
+## Mathematical Semantics
 
-Let `R = src.GetValidRow()` and `C = src.GetValidCol()`. For `0 <= j < C`:
+Assume `R = src.GetValidRow()` and `C = src.GetValidCol()`. For `0 <= j < C`:
 
 $$ \mathrm{dst}_{0,j} = \prod_{i=0}^{R-1} \mathrm{src}_{i,j} $$
 
-## C++ Intrinsic
+## C++ Built-in APIs
 
 Declared in `include/pto/common/pto_instr.hpp`:
+> The public include header is `<pto/pto-inst.hpp>`, and the internal declaration is located in `pto/common/pto_instr.hpp`.
 
 ```cpp
 template <typename TileDataOut, typename TileDataIn, typename... WaitEvents>
@@ -26,26 +28,26 @@ PTO_INST RecordEvent TCOLPROD(TileDataOut &dst, TileDataIn &src, WaitEvents &...
 
 ## Constraints
 
-### General constraints / checks
+### General Constraints or Checks
 
 - `dst` and `src` must be `TileType::Vec`.
-- `dst` and `src` must use standard ND layout: row-major and non-fractal (`BLayout::RowMajor`, `SLayout::NoneBox`).
-- `dst` and `src` must use the same element type.
+- `dst` and `src` must use the standard ND layout: row-major and non-fractal (`BLayout::RowMajor`, `SLayout::NoneBox`).
+- The element types of `dst` and `src` must be consistent.
 - Runtime checks:
     - `src.GetValidCol() == dst.GetValidCol()`
-- If `src.GetValidRow() == 0` or `src.GetValidCol() == 0`, the implementation returns early.
+- If `src.GetValidRow() == 0` or `src.GetValidCol() == 0`, the implementation returns directly.
 
-### A2A3 implementation checks
+### Implementation Check for Atlas A2/A3 Training Products/Atlas A2/A3 Inference Products
 
 - Supported element types: `half`, `float`, `int16_t`, `int32_t`.
 
-### A5 implementation checks
+### Ascend 950PR/Ascend 950DT Implementation Check
 
 - Supported element types: `half`, `float`, `bfloat16_t`, `int16_t`, `uint16_t`, `int32_t`, `uint32_t`.
 
 ## Examples
 
-### Auto
+### Automatic
 
 ```cpp
 #include <pto/pto-inst.hpp>

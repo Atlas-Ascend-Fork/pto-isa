@@ -1,25 +1,27 @@
 # TCOLSUM
 
+<!-- md-trans-meta sourceCommit=unknown translatedAt=2026-10-30T04:48:26.629Z pushedAt=2026-11-02T03:00:52.173Z nl=2 -->
 
-## Tile Operation Diagram
+## Instruction Diagram
 
 ![TCOLSUM tile operation](../figures/isa/TCOLSUM.svg)
 
 ## Introduction
 
-Reduce each column by summing across rows.
+Reduces each column by summing its rows.
 
-## Math Interpretation
+## Mathematical Semantics
 
-Let `R = src.GetValidRow()` and `C = src.GetValidCol()`. For `0 <= j < C`:
+Assume `R = src.GetValidRow()` and `C = src.GetValidCol()`. For `0 <= j < C`:
 
 $$ \mathrm{dst}_{0,j} = \sum_{i=0}^{R-1} \mathrm{src}_{i,j} $$
 
-`isBinary` selects binary-tree or sequential accumulation; the A5 64-bit integer path ignores it.
+`isBinary` selects the binary tree or sequential accumulation; the 64-bit integer path on A5 ignores this parameter.
 
-## C++ Intrinsic
+## C++ Built-in APIs
 
 Declared in `include/pto/common/pto_instr.hpp`:
+> The public include header is `<pto/pto-inst.hpp>`, and the internal declaration is located in `pto/common/pto_instr.hpp`.
 
 ```cpp
 template <typename TileDataOut, typename TileDataIn, typename... WaitEvents>
@@ -31,64 +33,64 @@ PTO_INST RecordEvent TCOLSUM(TileDataOut &dst, TileDataIn &src, TileDataTmp &tmp
 
 ## Constraints
 
-### General constraints / checks
+### General Constraints or Checks
 
 - `dst` and `src` must be `TileType::Vec`.
-- `dst` and `src` must use standard ND layout: row-major and non-fractal (`BLayout::RowMajor`, `SLayout::NoneBox`).
-- `dst` and `src` must use the same element type.
+- `dst` and `src` must use the standard ND layout: row-major and non-fractal (`BLayout::RowMajor`, `SLayout::NoneBox`).
+- The element types of `dst` and `src` must be consistent.
 - Runtime checks:
     - `src.GetValidCol() == dst.GetValidCol()`
-    - `src.GetValidRow() != 0` (implementation silently returns early when zero, no computation performed)
-    - `src.GetValidCol() != 0` (implementation silently returns early when zero, no computation performed)
-    - Only for binary accumulation that uses `tmp`: `src.GetValidCol() <= tmp` row stride measured in `src` elements
-- For types other than 64-bit integers, `isBinary` selects the backend path:
-    - `true`: binary-tree accumulation using `tmp`
-    - `false`: sequential accumulation into `dst`
+    - `src.GetValidRow() != 0` (when it is zero, the implementation returns silently without performing computation)
+    - `src.GetValidCol() != 0` (when it is zero, the implementation returns silently without performing computation)
+    - Only for the binary accumulation path that uses `tmp`: `src.GetValidCol()` must not be greater than the `tmp` row stride in terms of `src` elements (that is, `tmp.RowStride * sizeof(TmpDType) / sizeof(DType) >= src.GetValidCol()`)
+- For non-64-bit integer types, `isBinary` selects the backend path:
+    - `true`: uses `tmp` for binary tree accumulation
+    - `false`: performs sequential accumulation directly on `dst`
 
-### A2A3 implementation checks
+### Implementation Check for Atlas A2/A3 Training Products/Atlas A2/A3 Inference Products
 
 - Supported element types: `half`, `float`, `int16_t`, `int32_t`.
-- `tmp` must be `TileType::Vec` and use standard ND layout: row-major and non-fractal (`BLayout::RowMajor`, `SLayout::NoneBox`).
-- `tmp` must use the same element type as `src` and `dst`.
-- If `src.GetValidRow() == 0` or `src.GetValidCol() == 0`, the implementation returns early.
+- `tmp` must be `TileType::Vec` and use the standard ND layout: row-major and non-fractal (`BLayout::RowMajor`, `SLayout::NoneBox`).
+- The element type of `tmp` must be consistent with that of `src` and `dst`.
+- If `src.GetValidRow() == 0` or `src.GetValidCol() == 0`, the implementation returns directly.
 
-### A5 implementation checks
+### Ascend 950PR/Ascend 950DT Implementation Check
 
-- Shared A5 column-reduce checks allow `half`, `float`, `int8_t`, `uint8_t`, `int16_t`, `uint16_t`, `int32_t`, `uint32_t`, `int64_t`, `uint64_t`, `bfloat16_t`.
-- The checked A5 `TCOLSUM` path still uses `tmp` only for binary accumulation of types other than 64-bit integers; no extra compile-time `tmp` type/layout assertions are explicitly enforced in `TCOLSUM_IMPL`.
+- The element types allowed by the Ascend 950PR/Ascend 950DT shared column reduction check are: `half`, `float`, `int8_t`, `uint8_t`, `int16_t`, `uint16_t`, `int32_t`, `uint32_t`, `int64_t`, `uint64_t`, `bfloat16_t`.
+- In the checked Ascend 950PR/Ascend 950DT `TCOLSUM` path, `tmp` is used only for the binary accumulation path of non-64-bit integers; `TCOLSUM_IMPL` does not add any additional explicit compile-time type/layout assertion for `tmp`.
 
-- For `int64_t` / `uint64_t`: use output valid shape `[1, src.GetValidCol()]`. Physical `Cols` is a multiple of 4; valid columns need not be aligned. Only valid results in row 0 are written; other physical padding is preserved.
+- For `int64_t` / `uint64_t`: the output valid shape should be `[1, src.GetValidCol()]`; the physical `Cols` is a multiple of 4, and the valid column count does not need to be aligned. Only the valid result of row 0 is written, and the remaining physical padding is preserved.
 
 ## Temporary Space
 
-### Without `tmp` (2-argument overload: `TCOLSUM(dst, src)`)
+### Without `tmp` (2-Parameter Overload: `TCOLSUM(dst, src)`)
 
-No `tmp` is required. Both A2A3 and A5 use sequential accumulation directly into `dst`.
+No `tmp` is required. Atlas A2/A3 training products/Atlas A2/A3 inference products and Ascend 950PR/Ascend 950DT all use sequential accumulation directly on `dst`.
 
-### With `tmp` and `isBinary` (4-argument overload: `TCOLSUM(dst, src, tmp, isBinary)`)
+### With `tmp` and `isBinary` (4-Parameter Overload: `TCOLSUM(dst, src, tmp, isBinary)`)
 
-#### A2A3
+#### Atlas A2/A3 Training Products/Atlas A2/A3 Inference Products
 
-- When `isBinary = true`: `tmp` **is used** for binary-tree accumulation. Adjacent row pairs from `src` are summed into `tmp`, then `tmp` is recursively halved until a single row remains.
+- When `isBinary = true`: `tmp` **is used** for binary tree accumulation. Adjacent row pairs in `src` are summed into `tmp`, and then `tmp` is recursively halved until only a single row remains.
   - `tmp` must have the same element type as `src`/`dst`.
-  - `tmp` must be `TileType::Vec`, row-major, non-fractal.
-  - `tmp.GetValidCol() >= src.GetValidCol()` (in element count, accounting for `tmp` stride).
-  - `tmp` needs at least `ceil(src.GetValidRow() / 2)` rows.
-- When `isBinary = false`: `tmp` is accepted but the implementation uses sequential accumulation into `dst`; `tmp` is not actively used.
+  - `tmp` must be `TileType::Vec`, row-major, and non-fractal.
+  - `tmp.GetValidCol() >= src.GetValidCol()` (in elements, considering the `tmp` stride).
+  - `tmp` requires at least `ceil(src.GetValidRow() / 2)` rows.
+- When `isBinary = false`: `tmp` is accepted but the implementation uses sequential accumulation directly on `dst`; `tmp` is not actively used.
 
-#### A5
+#### Ascend 950PR/Ascend 950DT
 
-For `int64_t` / `uint64_t`, both overloads use the same integer column-reduction path; `tmp` and `isBinary` are ignored and no temporary tile storage is used. The following scratch requirements apply only to other supported types.
+For `int64_t` / `uint64_t`, both overloads use the same integer column reduction path; both `tmp` and `isBinary` are ignored, and no temporary Tile storage is used. The following temporary space requirements apply only to other supported types.
 
-- When `isBinary = true`: `tmp` **is used** for binary-tree accumulation in vector registers with UB storage.
+- When `isBinary = true`: `tmp` **is used** for binary tree accumulation based on vector registers (using UB storage).
   - `tmp` must have the same element type as `src`/`dst`.
-  - `tmp.GetValidCol() >= src.GetValidCol()` (in element count, accounting for `tmp` stride).
-  - `tmp` needs at least `ceil(src.GetValidRow() / 2)` rows.
-- When `isBinary = false`: `tmp` is not actively used; the implementation uses sequential reduction via `TColReduceInstr`.
+  - `tmp.GetValidCol() >= src.GetValidCol()` (in elements, considering the `tmp` stride).
+  - `tmp` requires at least `ceil(src.GetValidRow() / 2)` rows.
+- When `isBinary = false`: `tmp` is not actively used; the implementation uses sequential reduction through `TColReduceInstr`.
 
 ## Examples
 
-### Auto
+### Automatic
 
 ```cpp
 #include <pto/pto-inst.hpp>

@@ -1,23 +1,25 @@
 # TADD
 
+<!-- md-trans-meta sourceCommit=unknown translatedAt=2026-10-30T04:30:35.573Z pushedAt=2026-11-02T03:00:52.154Z nl=2 -->
 
-## Tile Operation Diagram
+## Instruction Diagram
 
 ![TADD tile operation](../figures/isa/TADD.svg)
 
 ## Introduction
 
-Elementwise add of two tiles.
+Element-wise addition of two tiles.
 
-## Math Interpretation
+## Mathematical Semantics
 
 For each element `(i, j)` in the valid region:
 
 $$ \mathrm{dst}_{i,j} = \mathrm{src0}_{i,j} + \mathrm{src1}_{i,j} $$
 
-## C++ Intrinsic
+## C++ Built-in APIs
 
 Declared in `include/pto/common/pto_instr.hpp`:
+> The public include header is `<pto/pto-inst.hpp>`, and the internal declaration is located in `pto/common/pto_instr.hpp`.
 
 ```cpp
 template <typename TileDataDst, typename TileDataSrc0, typename TileDataSrc1, typename... WaitEvents>
@@ -26,26 +28,22 @@ PTO_INST RecordEvent TADD(TileDataDst &dst, TileDataSrc0 &src0, TileDataSrc1 &sr
 
 ## Constraints
 
-- **Implementation checks (A2A3)**:
-    - The dtypes of `dst`, `src0`, and `src1` must be identical and one of: `int32_t`, `int16_t`, `half`, `float`.
-    - The layouts of `dst`, `src0`, and `src1` must all be row-major (`TileData::isRowMajor`).
-- **Implementation checks (A5)**:
-    - The dtypes of `dst`, `src0`, and `src1` must be identical and one of: `int32_t`, `uint32_t`, `int64_t`, `uint64_t`, `float`, `int16_t`, `uint16_t`, `half`, `bfloat16_t`, `uint8_t`, `int8_t`.
-    - The layouts of `dst`, `src0`, and `src1` must all be row-major (`TileData::isRowMajor`).
-- **Implementation checks (CPU_SIM)**:
-    - The three operand dtypes must be identical. CPU_SIM has no additional row-major-only restriction; row-major,
-      column-major, and other supported Tile layouts use their corresponding per-operand offset calculation.
+- **Implementation check (Atlas A2/A3 training products/Atlas A2/A3 inference products)**:
+    - `dst`, `src0`, and `src1` must have the same data type, which must be one of the following: `int32_t`, `int16_t`, `half`, `float`.
+    - The Tile layouts of `dst`, `src0`, and `src1` must all be row-major (`TileData::isRowMajor`).
+- **Implementation check (Ascend 950PR/Ascend 950DT)**:
+    - `dst`, `src0`, and `src1` must have the same data type, which must be one of the following: `int32_t`, `uint32_t`, `int64_t`, `uint64_t`, `float`, `int16_t`, `uint16_t`, `half`, `bfloat16_t`, `uint8_t`, `int8_t`.
+    - The tile layouts of `dst`, `src0`, and `src1` must all be row-major (`TileData::isRowMajor`).
+- **Implementation check (CPU_SIM)**:
+    - The three operands must have the same data type. CPU_SIM does not additionally restrict to row-major; row-major, column-major, and other supported Tile layouts each use the corresponding operand's own offset for calculation.
 - **Valid region**:
-    - The op uses `dst.GetValidRow()` / `dst.GetValidCol()` as the iteration domain.
-    - `dst`, `src0`, and `src1` may have distinct C++ Tile types, including different static or dynamic
-      `ValidRow`/`ValidCol` template arguments, provided that their element types are identical.
-    - A2A3, A5, and CPU_SIM require `src0`, `src1`, and `dst` to have identical runtime valid row and column counts and
-      trigger an assertion failure on mismatch. CPU_SIM computes each operand's address from that operand's own Tile
-      layout and physical shape.
+    - The operation uses `dst.GetValidRow()`/`dst.GetValidCol()` as the iteration domain.
+    - `dst`, `src0`, and `src1` may use different C++ Tile types, including different static or dynamic `ValidRow`/`ValidCol` template parameters, provided that the three operands have the same element type.
+    - A2A3, A5, and CPU_SIM all require that the runtime valid row and column counts of `src0`, `src1`, and `dst` be exactly identical; a mismatch triggers an assertion failure. CPU_SIM computes addresses separately based on each operand's own Tile layout and physical shape.
 
 ## Examples
 
-### Auto
+### Automatic
 
 ```cpp
 #include <pto/pto-inst.hpp>
@@ -59,7 +57,7 @@ void example_auto() {
 }
 ```
 
-### Auto (mixed static and dynamic valid shapes)
+### Automatic (Mixed Static and Dynamic Valid Shapes)
 
 ```cpp
 #include <pto/pto-inst.hpp>

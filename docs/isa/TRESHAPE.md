@@ -1,19 +1,23 @@
 # TRESHAPE
 
+<!-- md-trans-meta sourceCommit=unknown translatedAt=2026-10-30T05:41:18.754Z pushedAt=2026-11-02T03:00:52.218Z nl=2 -->
 
-## Tile Operation Diagram
+## Instruction Diagram
 
 ![TRESHAPE tile operation](../figures/isa/TRESHAPE.svg)
 
 ## Introduction
 
-Reinterpret a tile as another tile type/shape while preserving the underlying bytes.
+Reinterprets a tile as another tile type/shape while preserving the underlying bytes.
 
-This is a *bitwise* reshape: it does not change values, it only changes how the same byte buffer is viewed.
+## Mathematical Semantics
 
-## C++ Intrinsic
+Unless otherwise specified, the semantics are defined on the valid region, and target-dependent behavior is marked as implementation-defined.
+
+## C++ Built-in APIs
 
 Declared in `include/pto/common/pto_instr.hpp`:
+> The public include header is `<pto/pto-inst.hpp>`, and the internal declaration is located in `pto/common/pto_instr.hpp`.
 
 ```cpp
 template <typename TileDataOut, typename TileDataIn, typename... WaitEvents>
@@ -24,15 +28,15 @@ PTO_INST RecordEvent TRESHAPE(TileDataOut &dst, TileDataIn &src, WaitEvents &...
 
 Enforced by `TRESHAPE_IMPL`:
 
-- **Tile type must match**: `TileDataIn::Loc == TileDataOut::Loc`.
-- **Total byte size must match**: `sizeof(InElem) * InNumel == sizeof(OutElem) * OutNumel`.
-- **No boxed/non-boxed conversion**:
-    - cannot reshape between `SLayout::NoneBox` and boxed layouts.
+- **Tile types must match**: `TileDataIn::Loc == TileDataOut::Loc`.
+- **Total byte sizes must match**: `sizeof(InElem) * InNumel == sizeof(OutElem) * OutNumel`.
+- **Boxed/non-boxed conversion is not allowed**:
+    - Reshape between `SLayout::NoneBox` and boxed layouts is not allowed.
 
-## Notes
+## Remarks
 
-- **CPU simulation**: implemented as a byte-for-byte copy into `dst`.
-- **A2/A3**: implemented as an alias (`TASSIGN_IMPL(dst, src.data())`), so `dst` and `src` refer to the same underlying storage.
+- **CPU simulation**: implemented as a byte-by-byte copy to `dst`.
+- **Atlas A2/A3 training products/Atlas A2/A3 inference products**: implemented as an alias (`TASSIGN_IMPL(dst, src.data())`), so `dst` and `src` reference the same underlying storage.
 
 ## Examples
 
@@ -51,7 +55,3 @@ void example() {
   TRESHAPE(dst, src);
 }
 ```
-
-## Math Interpretation
-
-Unless otherwise specified, semantics are defined over the valid region and target-dependent behavior is marked as implementation-defined.

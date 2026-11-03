@@ -1,23 +1,25 @@
 # TMIN
 
+<!-- md-trans-meta sourceCommit=unknown translatedAt=2026-10-30T05:18:11.363Z pushedAt=2026-11-02T03:00:52.198Z nl=2 -->
 
-## Tile Operation Diagram
+## Instruction Diagram
 
 ![TMIN tile operation](../figures/isa/TMIN.svg)
 
 ## Introduction
 
-Elementwise minimum of two tiles.
+Computes the element-wise minimum of two tiles.
 
-## Math Interpretation
+## Mathematical Semantics
 
 For each element `(i, j)` in the valid region:
 
 $$ \mathrm{dst}_{i,j} = \min(\mathrm{src0}_{i,j}, \mathrm{src1}_{i,j}) $$
 
-## C++ Intrinsic
+## C++ Built-in APIs
 
 Declared in `include/pto/common/pto_instr.hpp`:
+> The public include header is `<pto/pto-inst.hpp>`, and the internal declaration is located in `pto/common/pto_instr.hpp`.
 
 ```cpp
 template <typename TileDataDst, typename TileDataSrc0, typename TileDataSrc1, typename... WaitEvents>
@@ -26,24 +28,24 @@ PTO_INST RecordEvent TMIN(TileDataDst &dst, TileDataSrc0 &src0, TileDataSrc1 &sr
 
 ## Constraints
 
-- **Implementation checks (A2A3)**:
-    - `TileData::DType` must be one of: `int32_t`, `int16_t`, `half`, `float`.
-    - Tile layout must be row-major (`TileData::isRowMajor`).
-    - Tile location must be vector (`TileData::Loc == TileType::Vec`).
-    - Static valid bounds: `TileData::ValidRow <= TileData::Rows` and `TileData::ValidCol <= TileData::Cols`.
-    - Runtime: `src0`, `src1` and `dst` tiles should have the same `validRow/validCol`.
-- **Implementation checks (A5)**:
-    - `TileData::DType` must be one of: `uint32_t`, `int32_t`, `int64_t`, `uint64_t`, `uint16_t`, `int16_t`, `uint8_t`,  `int8_t`, `bfloat16_t`, `float`, `half`.
-    - Tile layout must be row-major (`TileData::isRowMajor`).
-    - Tile location must be vector (`TileData::Loc == TileType::Vec`).
-    - Static valid bounds: `TileData::ValidRow <= TileData::Rows` and `TileData::ValidCol <= TileData::Cols`.
-    - Runtime: `src0`, `src1` and `dst` tiles should have the same `validRow/validCol`.
+- **Implementation check (Atlas A2/A3 training products/Atlas A2/A3 inference products)**:
+    - `TileData::DType` must be one of the following: `int32_t`, `int16_t`, `half`, `float`.
+    - The tile layout must be row-major (`TileData::isRowMajor`).
+    - The tile position must be a vector (`TileData::Loc == TileType::Vec`).
+    - Static valid boundary: `TileData::ValidRow <= TileData::Rows` and `TileData::ValidCol <= TileData::Cols`.
+    - Runtime: the `src0`, `src1`, and `dst` tiles must have the same `validRow/validCol`.
+- **Implementation check (Ascend 950PR/Ascend 950DT)**:
+    - `TileData::DType` must be one of the following: `uint32_t`, `int32_t`, `int64_t`, `uint64_t`, `uint16_t`, `int16_t`, `uint8_t`, `int8_t`, `bfloat16_t`, `float`, `half`.
+    - The tile layout must be row-major (`TileData::isRowMajor`).
+    - The tile position must be a vector (`TileData::Loc == TileType::Vec`).
+    - Static valid boundary: `TileData::ValidRow <= TileData::Rows` and `TileData::ValidCol <= TileData::Cols`.
+    - Runtime: the `src0`, `src1`, and `dst` tiles must have the same `validRow/validCol`.
 - **Valid region**:
-    - The op uses `dst.GetValidRow()` / `dst.GetValidCol()` as the iteration domain; `src0/src1` are assumed to be compatible (not validated by explicit runtime checks in this op).
+    - This operation uses `dst.GetValidRow()`/`dst.GetValidCol()` as the iteration domain; `src0/src1` are assumed to be compatible (not verified through explicit runtime checks in this operation).
 
 ## Examples
 
-### Auto
+### Automatic
 
 ```cpp
 #include <pto/pto-inst.hpp>
