@@ -32,6 +32,42 @@ def run_command(command, cwd=None, check=True):
         raise
 
 
+def run_test_command(command, cwd=None, tail_lines=40, on_line=None):
+    """Run a test binary and relay its output line by line.
+
+    Output is read through a pipe instead of inherited for three reasons:
+    undecodable bytes are escaped instead of aborting the relay, ``on_line``
+    can inspect every line (the gtest runner counts cases this way), and a
+    failure can be summarised with the last ``tail_lines`` lines instead of
+    only a return code. If the relay is interrupted the direct child is
+    killed, so a stuck suite does not keep running in the background.
+    """
+    print(f"run command: {' '.join(command)}")
+    proc = subprocess.Popen(
+        command, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+        text=True, bufsize=1, encoding="utf-8", errors="backslashreplace",
+    )
+    tail = []
+    try:
+        for line in proc.stdout:
+            sys.stdout.write(line)
+            sys.stdout.flush()
+            if on_line is not None:
+                on_line(line)
+            if tail_lines:
+                tail.append(line)
+                if len(tail) > tail_lines:
+                    tail.pop(0)
+    except BaseException:
+        proc.kill()
+        raise
+    finally:
+        proc.wait()
+    if proc.returncode != 0:
+        raise subprocess.CalledProcessError(proc.returncode, command, output="".join(tail).rstrip())
+    return ""
+
+
 def run_gtest_binary(command, cwd=None):
     """Run a gtest binary, relay its output line by line, and return the number
     of test cases it reported running.
@@ -41,20 +77,15 @@ def run_gtest_binary(command, cwd=None):
     exits 0, so callers must treat a zero count as a failure: a mistyped
     --gtest_filter would otherwise drop a whole suite while CI stays green.
     """
-    print(f"run command: {' '.join(command)}")
-    proc = subprocess.Popen(
-        command, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1
-    )
     ran = 0
-    for line in proc.stdout:
-        sys.stdout.write(line)
-        sys.stdout.flush()
+
+    def count_running(line):
+        nonlocal ran
         match = RE_GTEST_RUNNING.search(line)
         if match:
             ran += int(match.group(1))
-    proc.wait()
-    if proc.returncode != 0:
-        raise subprocess.CalledProcessError(proc.returncode, command)
+
+    run_test_command(command, cwd=cwd, on_line=count_running)
     return ran
 
 
@@ -333,9 +364,7 @@ def run_binary(testcase, run_mode, args="all", is_comm=False, nranks=2):
         count_file = None if is_comm else os.environ.get("PTO_CASE_COUNT_FILE")
 
         if count_file is None:
-            print(f"run command: {' '.join(cmd)}")
-            output = run_command(cmd)
-            print(output)
+            run_test_command(cmd)
         else:
             ran = run_gtest_binary(cmd)
             expected = expected_case_count(args)
@@ -359,6 +388,9 @@ def run_binary(testcase, run_mode, args="all", is_comm=False, nranks=2):
 
     except Exception as e:
         print(f"run binary failed: {e}")
+        if isinstance(e, subprocess.CalledProcessError) and e.output:
+            print(f"--- last output from the failed command (exit {e.returncode}) ---")
+            print(e.output)
         raise
     finally:
         os.chdir(original_dir)
