@@ -21,6 +21,9 @@ full text of the License.
 namespace pto {
 
 template <typename T>
+constexpr bool IsRowArgFloat = std::is_same_v<T, float> || std::is_same_v<T, half> || std::is_same_v<T, bfloat16_t>;
+
+template <typename T>
 struct ROWIDXMAX {
     static constexpr typename Padding<T>::Type InitVal = Padding<T>::Min;
     using PaddingType = typename Padding<T>::Type;
@@ -29,6 +32,11 @@ struct ROWIDXMAX {
     static PTO_INTERNAL void Compare(MaskReg& dst, RegType& src0, RegType& src1, MaskReg& preg)
     {
         vcmp_lt(dst, src0, src1, preg);
+    }
+
+    static PTO_INTERNAL void KeepOrdered(MaskReg& keep, RegType& best, RegType& candidate, MaskReg& valid)
+    {
+        vcmp_ge(keep, best, candidate, valid);
     }
 };
 
@@ -41,6 +49,11 @@ struct ROWIDXMIN {
     static PTO_INTERNAL void Compare(MaskReg& dst, RegType& src0, RegType& src1, MaskReg& preg)
     {
         vcmp_gt(dst, src0, src1, preg);
+    }
+
+    static PTO_INTERNAL void KeepOrdered(MaskReg& keep, RegType& best, RegType& candidate, MaskReg& valid)
+    {
+        vcmp_le(keep, best, candidate, valid);
     }
 };
 
@@ -141,6 +154,94 @@ PTO_INTERNAL void TRowReduceIdxProc(
     }
 }
 
+template <
+    typename ReduceIdxOp, typename TileDataOutVal, typename TileDataOutIdx, typename TileDataIn, bool outputVal,
+    bool postUpdate>
+PTO_INTERNAL void TRowReduceFloatIdxProc(
+    __ubuf__ typename TileDataOutVal::DType* dstVal, __ubuf__ typename TileDataOutIdx::DType* dstIdx,
+    __ubuf__ typename TileDataIn::DType* src, uint32_t rows, uint32_t cols, int32_t repeatTimes, int32_t srcAdjust)
+{
+    using T = typename TileDataIn::DType;
+    using TIdx = typename TileDataOutIdx::DType;
+    using Level = std::conditional_t<sizeof(T) == 2, uint16_t, uint32_t>;
+    using IndexBits = std::make_unsigned_t<TIdx>;
+    constexpr unsigned elements = CCE_VL / sizeof(T);
+    constexpr auto valStore =
+        std::integral_constant<::DistVST, static_cast<::DistVST>(GetDistVst<T, DistVST::DIST_ONEPT>())>();
+    constexpr auto idxStore =
+        std::integral_constant<::DistVST, static_cast<::DistVST>(GetDistVst<TIdx, DistVST::DIST_ONEPT>())>();
+
+    __VEC_SCOPE__
+    {
+        uint32_t validCols = cols, one = 1, oneIdx = 1;
+        auto full = CreatePredicate<T>(validCols);
+        const auto first = CreatePredicate<T>(one);
+        const auto firstIdx = CreatePredicate<TIdx>(oneIdx);
+        RegTensor<IndexBits> zero;
+        vbr(zero, 0);
+        for (uint16_t row = 0; row < static_cast<uint16_t>(rows); ++row) {
+            RegTensor<T> best;
+            RegTensor<Level> bestLevel;
+            vdup((RegTensor<typename ReduceIdxOp::PaddingType>&)best, ReduceIdxOp::InitVal, full, MODE_ZEROING);
+            vbr(bestLevel, 0);
+            uint32_t remaining = cols;
+            // Keep the earliest winner per lane across repeats, including NaN and either sign of zero.
+            for (uint16_t repeat = 0; repeat < static_cast<uint16_t>(repeatTimes); ++repeat) {
+                auto valid = CreatePredicate<T>(remaining);
+                RegTensor<T> candidate;
+                if constexpr (postUpdate) {
+                    vlds(candidate, src, elements, NORM, POST_UPDATE);
+                } else {
+                    vlds(candidate, src, row * TileDataIn::RowStride + repeat * elements, NORM);
+                }
+                MaskReg keep, bestNan, update;
+                ReduceIdxOp::KeepOrdered(keep, best, candidate, valid);
+                vcmp_ne(bestNan, best, best, valid);
+                por(keep, keep, bestNan, valid);
+                pnot(update, keep, valid);
+                vmov(best, candidate, update);
+                RegTensor<Level> level;
+                vdup(level, static_cast<Level>(repeat), valid, MODE_ZEROING);
+                vmov(bestLevel, level, update);
+            }
+
+            RegTensor<T> extreme, broadcast;
+            ReduceIdxOp::Reduce(extreme, best, full);
+            vdup(broadcast, extreme, full, POS_LOWEST, MODE_ZEROING);
+            MaskReg match, nan;
+            vcmp_eq(match, best, broadcast, full);
+            vcmp_ne(nan, best, best, full);
+            por(match, match, nan, full);
+            // The minimum repeat wins first. VCMin supplies its first matching lane as well.
+            RegTensor<Level> winner;
+            vcmin(winner, bestLevel, match, MODE_ZEROING);
+            RegTensor<IndexBits> packed, level, lane;
+            if constexpr (sizeof(T) == sizeof(TIdx)) {
+                packed = winner;
+            } else {
+                vunpack(packed, winner, LOWER);
+            }
+            vdintlv(level, lane, packed, zero);
+            vmuls(level, level, static_cast<IndexBits>(elements), firstIdx, MODE_ZEROING);
+            RegTensor<TIdx> index;
+            vadd((RegTensor<IndexBits>&)index, level, lane, firstIdx, MODE_ZEROING);
+
+            if constexpr (postUpdate) {
+                vsts(index, dstIdx, TileDataOutIdx::RowStride, idxStore, firstIdx, POST_UPDATE);
+                if constexpr (outputVal) {
+                    vsts(extreme, dstVal, TileDataOutVal::RowStride, valStore, first, POST_UPDATE);
+                }
+                src += srcAdjust;
+            } else {
+                vsts(index, dstIdx, row * TileDataOutIdx::RowStride, idxStore, firstIdx);
+                if constexpr (outputVal) {
+                    vsts(extreme, dstVal, row * TileDataOutVal::RowStride, valStore, first);
+                }
+            }
+        }
+    }
+}
+
 template <typename ReduceIdxOp, typename TileDataOutVal, typename TileDataOutIdx, typename TileDataIn, bool outputVal>
 PTO_INTERNAL void TRowReduceIdxImpl(
     __ubuf__ typename TileDataOutVal::DType* dstValPtr, __ubuf__ typename TileDataOutIdx::DType* dstIdxPtr,
@@ -152,12 +253,22 @@ PTO_INTERNAL void TRowReduceIdxImpl(
     constexpr unsigned elementsPerRepeat = CCE_VL / sizeof(TSrc);
     int32_t repeatTimes = CeilDivision(cols, elementsPerRepeat);
     if (version == VFIMPL_2D_NO_POST_UPDATE) {
-        TRowReduceIdxProc<ReduceIdxOp, TileDataOutVal, TileDataOutIdx, TileDataIn, outputVal, false>(
-            dstValPtr, dstIdxPtr, srcPtr, rows, cols, repeatTimes, 0);
+        if constexpr (IsRowArgFloat<TSrc>) {
+            TRowReduceFloatIdxProc<ReduceIdxOp, TileDataOutVal, TileDataOutIdx, TileDataIn, outputVal, false>(
+                dstValPtr, dstIdxPtr, srcPtr, rows, cols, repeatTimes, 0);
+        } else {
+            TRowReduceIdxProc<ReduceIdxOp, TileDataOutVal, TileDataOutIdx, TileDataIn, outputVal, false>(
+                dstValPtr, dstIdxPtr, srcPtr, rows, cols, repeatTimes, 0);
+        }
     } else {
         int32_t srcAdjust = static_cast<int32_t>(TileDataIn::RowStride) - repeatTimes * elementsPerRepeat;
-        TRowReduceIdxProc<ReduceIdxOp, TileDataOutVal, TileDataOutIdx, TileDataIn, outputVal, true>(
-            dstValPtr, dstIdxPtr, srcPtr, rows, cols, repeatTimes, srcAdjust);
+        if constexpr (IsRowArgFloat<TSrc>) {
+            TRowReduceFloatIdxProc<ReduceIdxOp, TileDataOutVal, TileDataOutIdx, TileDataIn, outputVal, true>(
+                dstValPtr, dstIdxPtr, srcPtr, rows, cols, repeatTimes, srcAdjust);
+        } else {
+            TRowReduceIdxProc<ReduceIdxOp, TileDataOutVal, TileDataOutIdx, TileDataIn, outputVal, true>(
+                dstValPtr, dstIdxPtr, srcPtr, rows, cols, repeatTimes, srcAdjust);
+        }
     }
 }
 
