@@ -12,7 +12,7 @@
 | ISA 参考 | [`docs/zh/isa/conventions.md`](isa/conventions.md) | 通用符号、操作数、事件与修饰符。 |
 | 通信 ISA | [`docs/zh/isa/comm/README.md`](isa/comm/README.md) | 每条通信 ISA 指令参考。 |
 | 权威源 | [`include/pto/common/pto_instr.hpp`](reference/pto-intrinsics-header.md) | C++ intrinsic API（权威来源）。 |
-| PTO auto 模式 | [`docs/zh/auto_mode/README.md`](README.md) | PTO auto模式文档入口 |
+| PTO auto 模式 | [`docs/zh/auto_mode/README.md`](auto_mode/README.md) | PTO auto模式文档入口 |
 
 ## 指令索引（全部 PTO 指令）
 

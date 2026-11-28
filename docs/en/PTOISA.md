@@ -12,7 +12,7 @@ This page is the source-synchronized ISA index generated from `docs/isa/manifest
 | ISA reference | [`docs/en/isa/conventions.md`](isa/conventions.md) | Shared notation, operands, events, and modifiers. |
 | Communication ISA | [`docs/en/isa/comm/README.md`](isa/comm/README.md) | Per-instruction communication ISA reference. |
 | Source of truth | [`include/pto/common/pto_instr.hpp`](reference/pto-intrinsics-header.md) | C++ intrinsic API (authoritative). |
-| PTO Auto Mode | [`docs/en/auto_mode/README.md`](README.md) | PTO auto mode guide entry point. |
+| PTO Auto Mode | [`docs/en/auto_mode/README.md`](auto_mode/README.md) | PTO auto mode guide entry point. |
 
 ## Instruction Index (All PTO Instructions)
 
